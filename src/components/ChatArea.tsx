@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useChatStore } from '@/store/chat-store';
 import { streamChat } from '@/lib/streaming';
 import { generateId } from '@/lib/utils';
-import { Message, AgentStatus, STATUS_LABELS } from '@/lib/types';
+import { Message, AgentStatus, AgentStep, AgentSourceData, STATUS_LABELS } from '@/lib/types';
 import { MessageBubble } from './MessageBubble';
 import { StreamingMessage } from './StreamingMessage';
 import { MessageInput } from './MessageInput';
@@ -26,6 +26,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     createChat,
     addMessage,
     updateMessage,
+    updateMessageFull,
     deleteLastAssistantMessage,
     setAgentStatus,
     setIsStreaming,
@@ -40,6 +41,13 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   const contentBufferRef = useRef('');
   const [streamTimer, setStreamTimer] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Agent step tracking for real-time display
+  const agentStepsRef = useRef<AgentStep[]>([]);
+  const agentSourcesRef = useRef<AgentSourceData[]>([]);
+  const followUpsRef = useRef<string[]>([]);
+  const thinkingRef = useRef('');
+  const statusDetailRef = useRef('');
 
   // Voice playback (auto-voice only)
   const { isPlaying, isLoading: isVoiceLoading, play: playVoice, stop: stopVoice } = useVoicePlayback();
@@ -131,7 +139,6 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   };
 
   const handleSend = useCallback(async (content: string) => {
-    // Stop any voice playback when sending a new message
     stopVoice();
 
     let chatId = activeChatId;
@@ -158,6 +165,11 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
 
     streamingMessageIdRef.current = assistantMessageId;
     contentBufferRef.current = '';
+    agentStepsRef.current = [];
+    agentSourcesRef.current = [];
+    followUpsRef.current = [];
+    thinkingRef.current = '';
+    statusDetailRef.current = '';
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -174,11 +186,58 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
       onToken: (token) => {
         contentBufferRef.current += token;
       },
-      onStatusChange: (status) => {
-        setAgentStatus(status);
+      onStatusChange: (status, detail) => {
+        setAgentStatus(status as AgentStatus);
+        if (detail) statusDetailRef.current = detail;
+      },
+      onThinking: (content) => {
+        thinkingRef.current += content;
+        agentStepsRef.current = [
+          ...agentStepsRef.current.filter(s => s.type !== 'thinking'),
+          { type: 'thinking', content: thinkingRef.current, timestamp: Date.now() },
+        ];
+      },
+      onTaskStart: (title) => {
+        agentStepsRef.current = [
+          ...agentStepsRef.current,
+          { type: 'task_start', content: title, timestamp: Date.now() },
+        ];
+      },
+      onTaskDone: () => {
+        agentStepsRef.current = [
+          ...agentStepsRef.current,
+          { type: 'task_done', timestamp: Date.now() },
+        ];
+      },
+      onToolStart: (tool, args) => {
+        agentStepsRef.current = [
+          ...agentStepsRef.current,
+          { type: 'tool_start', tool, args, timestamp: Date.now() },
+        ];
+      },
+      onToolResult: (tool, summary, sources) => {
+        agentStepsRef.current = [
+          ...agentStepsRef.current,
+          { type: 'tool_result', tool, summary, sources, timestamp: Date.now() },
+        ];
+        if (sources) {
+          agentSourcesRef.current = [...agentSourcesRef.current, ...sources];
+        }
+      },
+      onFollowUps: (suggestions) => {
+        followUpsRef.current = suggestions;
       },
       onDone: () => {
-        updateMessage(chatId!, assistantMessageId, contentBufferRef.current);
+        // Persist content + agent steps + sources + follow-ups
+        const uniqueSources = agentSourcesRef.current.filter(
+          (s, i, arr) => arr.findIndex(x => x.url === s.url) === i
+        );
+        updateMessageFull(chatId!, assistantMessageId, {
+          content: contentBufferRef.current,
+          agentSteps: agentStepsRef.current.length > 0 ? [...agentStepsRef.current] : undefined,
+          sources: uniqueSources.length > 0 ? uniqueSources : undefined,
+          followUps: followUpsRef.current.length > 0 ? [...followUpsRef.current] : undefined,
+        });
         streamingMessageIdRef.current = null;
         setIsStreaming(false);
         setAbortController(null);
@@ -193,7 +252,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
       },
       signal: controller.signal,
     });
-  }, [activeChatId, createChat, addMessage, updateMessage, setAbortController, setIsStreaming, setAgentStatus, getActiveChat, stopVoice]);
+  }, [activeChatId, createChat, addMessage, updateMessage, updateMessageFull, setAbortController, setIsStreaming, setAgentStatus, getActiveChat, stopVoice]);
 
   const handleStop = useCallback(() => {
     const { abortController } = useChatStore.getState();
@@ -237,7 +296,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
             </button>
           )}
           <button className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-bg-hover text-t-secondary hover:text-t-primary transition-colors text-[13px] font-medium">
-            <span>Horizon Claude</span>
+            <span>Horizon Agent</span>
             <ChevronDown size={14} className="text-t-tertiary" />
           </button>
         </div>
@@ -310,6 +369,12 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                     key={msg.id}
                     contentRef={contentBufferRef}
                     isStreaming={true}
+                    agentStepsRef={agentStepsRef}
+                    agentSourcesRef={agentSourcesRef}
+                    thinkingRef={thinkingRef}
+                    followUpsRef={followUpsRef}
+                    statusDetailRef={statusDetailRef}
+                    onFollowUpClick={handleSend}
                   />
                 );
               }
@@ -319,6 +384,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                   key={msg.id}
                   message={msg}
                   isLatest={isLast}
+                  onFollowUpClick={handleSend}
                 />
               );
             })}
@@ -342,7 +408,9 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                 <div className="flex items-center justify-between bg-bg-elevated border border-b rounded-xl px-4 py-2.5">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
-                    <span className="text-[13px] text-t-secondary">{STATUS_LABELS[agentStatus] || 'Processing...'}</span>
+                    <span className="text-[13px] text-t-secondary">
+                      {statusDetailRef.current || STATUS_LABELS[agentStatus] || 'Processing...'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-[12px] text-t-tertiary font-mono">{formatTime(streamTimer)}</span>
@@ -393,10 +461,10 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
 
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 mt-4 sm:mt-6">
           {[
-            { icon: '📝', label: 'Create slides' },
+            { icon: '🔍', label: 'Research a topic' },
             { icon: '🌐', label: 'Build website' },
-            { icon: '🖥️', label: 'Develop desktop apps' },
-            { icon: '✨', label: 'Design' },
+            { icon: '📊', label: 'Compare technologies' },
+            { icon: '✨', label: 'Explain a concept' },
             { icon: '...', label: 'More' },
           ].map((chip) => (
             <button

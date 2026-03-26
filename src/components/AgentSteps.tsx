@@ -109,8 +109,8 @@ export function SourcesList({ sources }: { sources: AgentSource[] }) {
   );
 }
 
-function TaskGroup({ group, isLast }: { group: AgentTaskGroup; isLast: boolean }) {
-  const [collapsed, setCollapsed] = useState(false);
+function TaskGroup({ group, isLast, defaultCollapsed }: { group: AgentTaskGroup; isLast: boolean; defaultCollapsed?: boolean }) {
+  const [collapsed, setCollapsed] = useState(defaultCollapsed ?? false);
 
   return (
     <div className="my-3">
@@ -177,11 +177,16 @@ function TaskGroup({ group, isLast }: { group: AgentTaskGroup; isLast: boolean }
   );
 }
 
-export function AgentSteps({ taskGroups }: { taskGroups: AgentTaskGroup[] }) {
+export function AgentSteps({ taskGroups, defaultCollapsed }: { taskGroups: AgentTaskGroup[]; defaultCollapsed?: boolean }) {
   return (
     <div className="space-y-1">
       {taskGroups.map((group, i) => (
-        <TaskGroup key={i} group={group} isLast={i === taskGroups.length - 1} />
+        <TaskGroup
+          key={i}
+          group={group}
+          isLast={i === taskGroups.length - 1}
+          defaultCollapsed={defaultCollapsed ?? (group.status === 'done')}
+        />
       ))}
     </div>
   );

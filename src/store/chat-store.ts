@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Chat, Message, AgentStatus } from '@/lib/types';
+import { Chat, Message, AgentStatus, AgentStep, AgentSourceData } from '@/lib/types';
 import { loadChats, saveChats, loadActiveChatId, saveActiveChatId } from '@/lib/storage';
 import { generateId } from '@/lib/utils';
 
@@ -22,6 +22,7 @@ interface ChatState {
   // Messages
   addMessage: (chatId: string, message: Message) => void;
   updateMessage: (chatId: string, messageId: string, content: string) => void;
+  updateMessageFull: (chatId: string, messageId: string, updates: Partial<Pick<Message, 'content' | 'agentSteps' | 'sources' | 'followUps'>>) => void;
   deleteLastAssistantMessage: (chatId: string) => void;
 
   // Streaming state
@@ -118,6 +119,20 @@ export const useChatStore = create<ChatState>((set, get) => ({
         if (c.id !== chatId) return c;
         const messages = c.messages.map(m =>
           m.id === messageId ? { ...m, content } : m
+        );
+        return { ...c, messages, updatedAt: Date.now() };
+      });
+      saveChats(chats);
+      return { chats };
+    });
+  },
+
+  updateMessageFull: (chatId: string, messageId: string, updates: Partial<Pick<Message, 'content' | 'agentSteps' | 'sources' | 'followUps'>>) => {
+    set(state => {
+      const chats = state.chats.map(c => {
+        if (c.id !== chatId) return c;
+        const messages = c.messages.map(m =>
+          m.id === messageId ? { ...m, ...updates } : m
         );
         return { ...c, messages, updatedAt: Date.now() };
       });

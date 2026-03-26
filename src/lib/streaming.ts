@@ -1,9 +1,15 @@
-import { Message } from './types';
+import { Message, AgentStep, AgentSourceData } from './types';
 
-interface StreamOptions {
+interface StreamCallbacks {
   messages: Message[];
   onToken: (token: string) => void;
-  onStatusChange: (status: 'understanding' | 'planning' | 'generating' | 'completed' | 'error') => void;
+  onStatusChange: (status: string, detail?: string) => void;
+  onThinking: (content: string) => void;
+  onTaskStart: (title: string) => void;
+  onTaskDone: (title: string) => void;
+  onToolStart: (tool: string, args: Record<string, unknown>) => void;
+  onToolResult: (tool: string, summary: string, sources?: AgentSourceData[]) => void;
+  onFollowUps: (suggestions: string[]) => void;
   onDone: () => void;
   onError: (error: string) => void;
   signal?: AbortSignal;
@@ -13,30 +19,24 @@ export async function streamChat({
   messages,
   onToken,
   onStatusChange,
+  onThinking,
+  onTaskStart,
+  onTaskDone,
+  onToolStart,
+  onToolResult,
+  onFollowUps,
   onDone,
   onError,
   signal,
-}: StreamOptions): Promise<void> {
-  onStatusChange('understanding');
-
-  // Brief pause for "understanding" status visibility
-  await new Promise(r => setTimeout(r, 400));
-
-  if (signal?.aborted) return;
-
-  onStatusChange('planning');
-  await new Promise(r => setTimeout(r, 300));
-
-  if (signal?.aborted) return;
-
-  onStatusChange('generating');
+}: StreamCallbacks): Promise<void> {
+  onStatusChange('thinking', 'Planning research approach...');
 
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        messages: messages.map(m => ({
+        messages: messages.map((m) => ({
           role: m.role,
           content: m.content,
         })),
@@ -53,36 +53,74 @@ export async function streamChat({
     if (!reader) throw new Error('No response body');
 
     const decoder = new TextDecoder();
+    let buffer = '';
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value, { stream: true });
-      const lines = chunk.split('\n');
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
 
       for (const line of lines) {
         if (!line.startsWith('data: ')) continue;
-        const data = line.slice(6);
-
-        if (data === '[DONE]') {
-          onStatusChange('completed');
-          onDone();
-          return;
-        }
+        const data = line.slice(6).trim();
+        if (!data) continue;
 
         try {
-          const parsed = JSON.parse(data);
-          const token = parsed.choices?.[0]?.delta?.content;
-          if (token) {
-            onToken(token);
+          const event = JSON.parse(data);
+
+          switch (event.type) {
+            case 'status':
+              onStatusChange(event.status, event.detail);
+              break;
+
+            case 'thinking':
+              onThinking(event.content);
+              break;
+
+            case 'task_start':
+              onTaskStart(event.title);
+              break;
+
+            case 'task_done':
+              onTaskDone(event.title);
+              break;
+
+            case 'tool_start':
+              onToolStart(event.tool, event.args);
+              break;
+
+            case 'tool_result':
+              onToolResult(event.tool, event.summary, event.sources);
+              break;
+
+            case 'text_delta':
+              onStatusChange('generating');
+              onToken(event.content);
+              break;
+
+            case 'follow_ups':
+              onFollowUps(event.suggestions);
+              break;
+
+            case 'error':
+              onError(event.message);
+              break;
+
+            case 'done':
+              onStatusChange('completed');
+              onDone();
+              return;
           }
         } catch {
-          // Skip malformed JSON lines
+          // Skip malformed JSON
         }
       }
     }
 
+    // Stream ended without explicit done event
     onStatusChange('completed');
     onDone();
   } catch (err: unknown) {

@@ -3,6 +3,7 @@ export type MessageRole = 'user' | 'assistant';
 export type AgentStatus =
   | 'idle'
   | 'understanding'
+  | 'planning'
   | 'thinking'
   | 'searching'
   | 'reading'
@@ -17,8 +18,17 @@ export interface AgentSourceData {
   description?: string;
 }
 
+export interface ResearchStats {
+  totalSearches: number;
+  totalPagesRead: number;
+  totalSources: number;
+  totalPhases: number;
+  durationMs: number;
+  domains: string[];
+}
+
 export interface AgentStep {
-  type: 'thinking' | 'tool_start' | 'tool_result' | 'task_start' | 'task_done';
+  type: 'thinking' | 'tool_start' | 'tool_result' | 'task_start' | 'task_done' | 'analysis';
   tool?: string;
   args?: Record<string, unknown>;
   summary?: string;
@@ -36,6 +46,7 @@ export interface Message {
   agentSteps?: AgentStep[];
   sources?: AgentSourceData[];
   followUps?: string[];
+  researchStats?: ResearchStats;
 }
 
 export interface Chat {
@@ -49,11 +60,12 @@ export interface Chat {
 export const STATUS_LABELS: Record<AgentStatus, string> = {
   idle: 'Waiting for input',
   understanding: 'Understanding request...',
+  planning: 'Planning research...',
   thinking: 'Thinking...',
   searching: 'Searching the web...',
   reading: 'Reading webpage...',
   analyzing: 'Analyzing results...',
-  generating: 'Generating response...',
-  completed: 'Task completed',
+  generating: 'Writing response...',
+  completed: 'Research complete',
   error: 'Something went wrong',
 };

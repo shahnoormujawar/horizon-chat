@@ -1,4 +1,4 @@
-import { AgentEvent, ToolDefinition, ToolResult } from './types';
+import { AgentEvent, ToolDefinition, ToolResult, ResearchStats } from './types';
 import { AGENT_TOOLS } from './tools';
 import { executeTool, summarizeToolResult } from './tool-executor';
 
@@ -49,64 +49,65 @@ const SYSTEM_PROMPT = `You are Horizon, an elite AI deep research agent. You con
 
 ## Research Methodology
 
-### Phase 1: Broad Discovery
-- Start with 2-3 different search queries from different angles for the same topic
-- Use varied query strategies: specific terms, broader context, and alternative phrasings
+### Phase 1: Planning
+Before ANY tool use, briefly state your research plan in 1-2 sentences. Example:
+"I'll research this by first searching for recent benchmarks, then reading the most authoritative sources, and cross-referencing the findings."
+
+### Phase 2: Broad Discovery
+- Start with 2-3 different search queries from different angles
+- Use varied query strategies: specific terms, broader context, alternative phrasings
 - Example: For "Is Rust faster than Go?" → search "Rust vs Go performance benchmarks 2025", "Go vs Rust compilation speed memory usage", "Rust Go real world production comparison"
 
-### Phase 2: Deep Dive
-- Read the 2-4 most promising and authoritative pages from search results (official docs, reputable publications, benchmarks, research papers)
+### Phase 3: Deep Dive
+- Read the 2-4 most promising and authoritative pages (official docs, reputable publications, benchmarks)
 - Don't just skim snippets — use read_webpage to get full article content
 - Prioritize: official documentation > peer-reviewed content > reputable tech publications > blog posts
 
-### Phase 3: Verification & Cross-Reference
+### Phase 4: Verification & Cross-Reference
 - If sources disagree, do follow-up searches to resolve conflicts
 - Search for counter-arguments or alternative perspectives
-- Verify specific claims, numbers, or statistics with additional searches
+- Verify specific claims with additional searches
 - Check recency — prefer 2024-2025 sources for fast-moving topics
 
-### Phase 4: Synthesis
+### Phase 5: Synthesis
 - Write a comprehensive, well-structured answer with clear sections
 - Cite specific sources inline using markdown links: [Source Title](url)
 - Include specific data points, numbers, and quotes when available
-- Acknowledge limitations, uncertainties, or areas where evidence is mixed
-- Provide actionable conclusions, not just information dumps
+- Acknowledge limitations or areas where evidence is mixed
+- Provide actionable conclusions
 
 ## Tool Usage Rules
 - ALWAYS search for any factual, technical, current events, or comparative question
 - Use MULTIPLE search queries (2-4) for complex topics — different angles yield different results
-- ALWAYS read_webpage for at least 1-2 key sources — search snippets are not enough for quality answers
-- Call tools in parallel when possible (e.g., multiple searches at once)
+- ALWAYS read_webpage for at least 1-2 key sources — search snippets are NOT enough
 - Minimum research: 2 searches + 1 page read for any non-trivial question
-- For deep research topics: 3-5 searches + 2-4 page reads across 2-3 iterations
+- For deep topics: 3-5 searches + 2-4 page reads across 2-3 iterations
+
+## Between Tool Calls
+After receiving tool results, write a brief 1-2 sentence analysis of what you found and what you still need. This shows your reasoning process. Examples:
+- "The benchmarks show Rust is 2-3x faster for CPU-bound tasks. Let me now check Go's advantages in developer productivity and deployment."
+- "Multiple sources confirm this approach. Let me verify with one more authoritative source."
+- "The results are contradictory — I need to search for more recent data."
 
 ## When NOT to use tools
-- Simple greetings, basic math, logic puzzles, creative writing prompts
-- Questions purely about your capabilities or identity
-- Coding tasks from well-established knowledge (basic algorithms, standard library usage)
+- Simple greetings, basic math, logic puzzles, creative writing
+- Questions purely about your capabilities
+- Coding tasks from well-established knowledge
 
-## Communication During Research
-Write a SHORT (1 sentence max) note before each research phase explaining what you're investigating. Examples:
-- "Searching for recent benchmarks comparing these technologies."
-- "Reading the official documentation for specific details."
-- "Cross-referencing with a second source to verify these numbers."
-
-Do NOT repeat research narration in the final answer.
-
-## Final Answer Quality Standards
-- **Structure**: Use headers (##), bullet points, bold for key terms, code blocks where relevant
-- **Depth**: Cover multiple aspects — don't give surface-level answers when depth is available
-- **Specificity**: Include specific numbers, dates, version numbers, benchmarks when found
-- **Balance**: Present multiple perspectives when the topic is debated
-- **Recency**: Note when information might be outdated or rapidly changing
-- **Citations**: Link to sources inline, e.g., "According to [Official Docs](url), ..."
-- **Actionability**: End with clear recommendations or next steps when appropriate`;
+## Final Answer Standards
+- **Structure**: Use headers, bullet points, bold for key terms, code blocks
+- **Depth**: Cover multiple aspects — not surface-level
+- **Specificity**: Include numbers, dates, versions, benchmarks when found
+- **Balance**: Present multiple perspectives when debated
+- **Citations**: Link to sources inline: "According to [Source](url), ..."
+- **Actionability**: End with clear recommendations when appropriate`;
 
 export async function runAgentLoop(
   messages: { role: string; content: string }[],
   emit: (event: AgentEvent) => void,
   signal?: AbortSignal
 ): Promise<void> {
+  const startTime = Date.now();
   const conversationMessages: ChatMessage[] = [
     { role: 'system', content: SYSTEM_PROMPT },
     ...messages.map((m) => ({
@@ -115,12 +116,17 @@ export async function runAgentLoop(
     })),
   ];
 
-  emit({ type: 'status', status: 'thinking', detail: 'Planning research approach...' });
+  // Research stats tracking
+  let totalSearches = 0;
+  let totalPagesRead = 0;
+  const allSourceUrls = new Set<string>();
+  let phaseCount = 0;
+
+  emit({ type: 'status', status: 'planning', detail: 'Planning research approach...' });
 
   for (let iteration = 0; iteration < MAX_ITERATIONS; iteration++) {
     if (signal?.aborted) return;
 
-    // Call Claude via OpenRouter
     const response = await callOpenRouter(conversationMessages, AGENT_TOOLS, true);
 
     if (!response.ok) {
@@ -131,8 +137,7 @@ export async function runAgentLoop(
       return;
     }
 
-    // Parse the streaming response
-    const { content, toolCalls, thinkingContent } = await parseStreamingResponse(
+    const { content, toolCalls } = await parseStreamingResponse(
       response,
       emit,
       signal
@@ -140,18 +145,31 @@ export async function runAgentLoop(
 
     if (signal?.aborted) return;
 
-    // Emit thinking if present
-    if (thinkingContent) {
-      emit({ type: 'thinking', content: thinkingContent });
-    }
-
-    // If no tool calls, we're done — the text has already been streamed
+    // No tool calls → final answer, we're done
     if (toolCalls.length === 0) {
       // Close any open task group
       if (iteration > 0) {
         emit({ type: 'task_done', title: '' });
       }
-      // Generate follow-up suggestions
+
+      // Emit research stats if any research was done
+      if (totalSearches > 0 || totalPagesRead > 0) {
+        const domains = [...allSourceUrls].map(u => {
+          try { return new URL(u).hostname.replace('www.', ''); } catch { return ''; }
+        }).filter(Boolean);
+        const uniqueDomains = [...new Set(domains)];
+
+        const stats: ResearchStats = {
+          totalSearches,
+          totalPagesRead,
+          totalSources: allSourceUrls.size,
+          totalPhases: phaseCount,
+          durationMs: Date.now() - startTime,
+          domains: uniqueDomains,
+        };
+        emit({ type: 'research_stats', stats });
+      }
+
       const followUps = generateFollowUps(content, messages);
       if (followUps.length > 0) {
         emit({ type: 'follow_ups', suggestions: followUps });
@@ -160,18 +178,22 @@ export async function runAgentLoop(
       return;
     }
 
-    // Derive a task title from Claude's intermediate text or the first tool call
+    // New research phase
+    phaseCount++;
     const taskTitle = deriveTaskTitle(content, toolCalls, iteration);
 
-    // Close previous task group if not the first iteration
     if (iteration > 0) {
       emit({ type: 'task_done', title: '' });
     }
 
-    // Start a new task group
     emit({ type: 'task_start', title: taskTitle });
 
-    // Add assistant message with tool calls to conversation
+    // Emit Claude's intermediate reasoning as analysis (visible to user)
+    if (content.trim()) {
+      emit({ type: 'analysis', content: content.trim() });
+    }
+
+    // Add assistant message with tool calls
     const assistantMessage: ChatMessage = {
       role: 'assistant',
       content: content || '',
@@ -193,15 +215,33 @@ export async function runAgentLoop(
 
       emit({ type: 'tool_start', tool: fnName, args });
 
-      // Update status based on tool type
       if (fnName === 'web_search') {
-        emit({ type: 'status', status: 'searching', detail: `Searching: ${args.query || ''}` });
+        totalSearches++;
+        emit({
+          type: 'status',
+          status: 'searching',
+          detail: `Searching: ${args.query || ''}`,
+          phase: phaseCount,
+        });
       } else if (fnName === 'read_webpage') {
-        emit({ type: 'status', status: 'reading', detail: `Reading: ${args.url || ''}` });
+        totalPagesRead++;
+        emit({
+          type: 'status',
+          status: 'reading',
+          detail: `Reading: ${(args.url as string || '').replace(/^https?:\/\/(www\.)?/, '').slice(0, 50)}`,
+          phase: phaseCount,
+        });
       }
 
       const result: ToolResult = await executeTool(fnName, args);
       const summary = summarizeToolResult(fnName, result);
+
+      // Track source URLs
+      if (result.sources) {
+        for (const s of result.sources) {
+          allSourceUrls.add(s.url);
+        }
+      }
 
       emit({
         type: 'tool_result',
@@ -210,7 +250,6 @@ export async function runAgentLoop(
         sources: result.sources,
       });
 
-      // Add tool result to conversation
       conversationMessages.push({
         role: 'tool',
         content: result.content,
@@ -219,10 +258,14 @@ export async function runAgentLoop(
       });
     }
 
-    emit({ type: 'status', status: 'analyzing', detail: 'Analyzing results...' });
+    emit({
+      type: 'status',
+      status: 'analyzing',
+      detail: 'Analyzing results...',
+      phase: phaseCount,
+    });
   }
 
-  // Hit max iterations
   emit({ type: 'error', message: 'Research loop reached maximum iterations.' });
   emit({ type: 'done' });
 }
@@ -232,7 +275,6 @@ async function callOpenRouter(
   tools: ToolDefinition[],
   stream: boolean
 ): Promise<Response> {
-  // Convert tool format for OpenRouter (OpenAI-compatible)
   const openaiTools = tools.map((t) => ({
     type: t.type,
     function: {
@@ -268,20 +310,17 @@ async function parseStreamingResponse(
 ): Promise<{
   content: string;
   toolCalls: ToolCall[];
-  thinkingContent: string;
 }> {
   const reader = response.body?.getReader();
   if (!reader) throw new Error('No response body');
 
   const decoder = new TextDecoder();
   let content = '';
-  let thinkingContent = '';
   const toolCallsMap: Map<
     number,
     { id: string; name: string; arguments: string }
   > = new Map();
 
-  // Buffer text deltas — only emit them if no tool calls follow
   const pendingTextDeltas: string[] = [];
   let hasToolCalls = false;
   let buffer = '';
@@ -311,13 +350,11 @@ async function parseStreamingResponse(
 
         const delta = choice.delta;
 
-        // Handle text content
         if (delta.content) {
           content += delta.content;
           pendingTextDeltas.push(delta.content);
         }
 
-        // Handle tool calls
         if (delta.tool_calls) {
           hasToolCalls = true;
           for (const tc of delta.tool_calls) {
@@ -340,8 +377,7 @@ async function parseStreamingResponse(
       }
     }
 
-    // If no tool calls seen yet, flush text deltas to the UI in real-time
-    // (they'll be the final answer text if no tools follow)
+    // Flush text deltas in real-time only if no tool calls (final answer)
     if (!hasToolCalls && pendingTextDeltas.length > 0) {
       for (const delta of pendingTextDeltas) {
         emit({ type: 'text_delta', content: delta });
@@ -349,10 +385,6 @@ async function parseStreamingResponse(
       pendingTextDeltas.length = 0;
     }
   }
-
-  // If tool calls were made, the buffered text was intermediate (research narration)
-  // — don't emit it as text_delta. It goes to task title instead.
-  // If no tool calls, any remaining deltas have already been flushed above.
 
   const toolCalls: ToolCall[] = Array.from(toolCallsMap.values()).map((tc) => ({
     id: tc.id,
@@ -363,7 +395,7 @@ async function parseStreamingResponse(
     },
   }));
 
-  return { content, toolCalls, thinkingContent };
+  return { content, toolCalls };
 }
 
 function generateFollowUps(
@@ -378,49 +410,33 @@ function generateFollowUps(
   const contentLower = content.toLowerCase();
   const suggestions: string[] = [];
 
-  // Comparison topics
   if (lastUserMsg.includes('vs') || lastUserMsg.includes('compare') || lastUserMsg.includes('difference')) {
     suggestions.push('Which one would you recommend for my use case?');
     suggestions.push('What are the trade-offs I should consider?');
   }
-
-  // Technical / how-to
   if (lastUserMsg.includes('how to') || lastUserMsg.includes('tutorial') || lastUserMsg.includes('guide')) {
     suggestions.push('What are common pitfalls to avoid?');
     suggestions.push('Can you show a practical example?');
   }
-
-  // Code-related
   if (content.includes('```') || lastUserMsg.includes('code') || lastUserMsg.includes('implement')) {
     suggestions.push('Can you explain this code step by step?');
   }
-
-  // Research / analysis
   if (contentLower.includes('however') || contentLower.includes('on the other hand') || contentLower.includes('debate')) {
     suggestions.push('What does the latest research say?');
   }
-
-  // News / current events
   if (lastUserMsg.includes('latest') || lastUserMsg.includes('new') || lastUserMsg.includes('2025') || lastUserMsg.includes('2026')) {
     suggestions.push('What are the implications of this?');
   }
-
-  // Long comprehensive answers
   if (content.length > 2000) {
     suggestions.push('Give me the TL;DR version');
   }
-
-  // Performance / benchmarks
   if (contentLower.includes('benchmark') || contentLower.includes('performance') || contentLower.includes('faster')) {
     suggestions.push('How do these numbers compare in production?');
   }
-
-  // Generic deep-dive
   if (suggestions.length < 2 && content.length > 500) {
     suggestions.push('Can you go deeper on the most important point?');
   }
 
-  // Deduplicate and return max 3
   const unique = [...new Set(suggestions)];
   return unique.slice(0, 3);
 }
@@ -430,7 +446,6 @@ function deriveTaskTitle(
   toolCalls: ToolCall[],
   iteration: number
 ): string {
-  // Try to extract a title from Claude's intermediate text
   if (content.trim()) {
     const firstLine = content.trim().split('\n')[0]
       .replace(/^#+\s*/, '')
@@ -442,7 +457,6 @@ function deriveTaskTitle(
     }
   }
 
-  // Fall back to deriving from tool calls
   const firstTool = toolCalls[0];
   if (firstTool) {
     try {

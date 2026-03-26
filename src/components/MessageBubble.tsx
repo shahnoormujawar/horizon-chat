@@ -3,11 +3,12 @@
 import { memo, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Message, AgentStep, AgentSourceData } from '@/lib/types';
+import { Message } from '@/lib/types';
 import { parseAgentContent } from '@/lib/parse-agent-steps';
 import { buildTaskGroups } from '@/lib/build-task-groups';
 import { CodeBlock } from './CodeBlock';
 import { AgentSteps, SourcesList } from './AgentSteps';
+import { ResearchBanner } from './ResearchBanner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -171,9 +172,14 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
         {/* Collapsible task groups — same beautiful UI as before but with REAL data */}
         <AgentSteps taskGroups={taskGroups} />
 
+        {/* Research stats banner */}
+        {message.researchStats && (
+          <ResearchBanner stats={message.researchStats} animated={false} />
+        )}
+
         {/* Main content (final answer) */}
         {message.content && (
-          <div className="mt-3">
+          <div className={message.researchStats ? '' : 'mt-3'}>
             <MarkdownContent content={message.content} />
           </div>
         )}

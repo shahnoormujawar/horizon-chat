@@ -65,6 +65,16 @@ function buildFromExplicitTasks(steps: AgentStep[], isStreaming: boolean): Agent
       };
     }
 
+    if (step.type === 'analysis') {
+      // Claude's intermediate reasoning — show as task group summary
+      if (step.content) {
+        currentGroup.summary = currentGroup.summary
+          ? currentGroup.summary + '\n\n' + step.content
+          : step.content;
+      }
+      continue;
+    }
+
     if (step.type === 'tool_start') {
       const action = toolToAction(step);
       if (action) currentGroup.actions.push(action);

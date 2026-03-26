@@ -1,14 +1,16 @@
-import { Message, AgentStep, AgentSourceData } from './types';
+import { Message, AgentSourceData, ResearchStats } from './types';
 
 interface StreamCallbacks {
   messages: Message[];
   onToken: (token: string) => void;
-  onStatusChange: (status: string, detail?: string) => void;
+  onStatusChange: (status: string, detail?: string, phase?: number) => void;
   onThinking: (content: string) => void;
+  onAnalysis: (content: string) => void;
   onTaskStart: (title: string) => void;
   onTaskDone: (title: string) => void;
   onToolStart: (tool: string, args: Record<string, unknown>) => void;
   onToolResult: (tool: string, summary: string, sources?: AgentSourceData[]) => void;
+  onResearchStats: (stats: ResearchStats) => void;
   onFollowUps: (suggestions: string[]) => void;
   onDone: () => void;
   onError: (error: string) => void;
@@ -20,16 +22,18 @@ export async function streamChat({
   onToken,
   onStatusChange,
   onThinking,
+  onAnalysis,
   onTaskStart,
   onTaskDone,
   onToolStart,
   onToolResult,
+  onResearchStats,
   onFollowUps,
   onDone,
   onError,
   signal,
 }: StreamCallbacks): Promise<void> {
-  onStatusChange('thinking', 'Planning research approach...');
+  onStatusChange('planning', 'Planning research approach...');
 
   try {
     const response = await fetch('/api/chat', {
@@ -73,11 +77,15 @@ export async function streamChat({
 
           switch (event.type) {
             case 'status':
-              onStatusChange(event.status, event.detail);
+              onStatusChange(event.status, event.detail, event.phase);
               break;
 
             case 'thinking':
               onThinking(event.content);
+              break;
+
+            case 'analysis':
+              onAnalysis(event.content);
               break;
 
             case 'task_start':
@@ -101,6 +109,10 @@ export async function streamChat({
               onToken(event.content);
               break;
 
+            case 'research_stats':
+              onResearchStats(event.stats);
+              break;
+
             case 'follow_ups':
               onFollowUps(event.suggestions);
               break;
@@ -120,7 +132,6 @@ export async function streamChat({
       }
     }
 
-    // Stream ended without explicit done event
     onStatusChange('completed');
     onDone();
   } catch (err: unknown) {

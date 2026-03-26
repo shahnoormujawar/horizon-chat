@@ -3,10 +3,11 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { AgentStep, AgentSourceData } from '@/lib/types';
+import { AgentStep, AgentSourceData, ResearchStats } from '@/lib/types';
 import { buildTaskGroups } from '@/lib/build-task-groups';
 import { CodeBlock } from './CodeBlock';
 import { AgentSteps, SourcesList } from './AgentSteps';
+import { ResearchBanner } from './ResearchBanner';
 import { Brain, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,6 +19,7 @@ interface StreamingMessageProps {
   thinkingRef?: React.MutableRefObject<string>;
   followUpsRef?: React.MutableRefObject<string[]>;
   statusDetailRef?: React.MutableRefObject<string>;
+  researchStatsRef?: React.MutableRefObject<ResearchStats | null>;
   onFollowUpClick?: (text: string) => void;
 }
 
@@ -90,7 +92,6 @@ function ThinkingSection({ content }: { content: string }) {
 
 function FollowUpChips({ suggestions, onClick }: { suggestions: string[]; onClick?: (text: string) => void }) {
   if (suggestions.length === 0) return null;
-
   return (
     <div className="flex flex-wrap gap-2 mt-4">
       {suggestions.map((s, i) => (
@@ -113,6 +114,7 @@ export function StreamingMessage({
   agentSourcesRef,
   thinkingRef,
   followUpsRef,
+  researchStatsRef,
   onFollowUpClick,
 }: StreamingMessageProps) {
   const [displayContent, setDisplayContent] = useState('');
@@ -120,6 +122,7 @@ export function StreamingMessage({
   const [sources, setSources] = useState<AgentSourceData[]>([]);
   const [thinking, setThinking] = useState('');
   const [followUps, setFollowUps] = useState<string[]>([]);
+  const [researchStats, setResearchStats] = useState<ResearchStats | null>(null);
   const rafRef = useRef<number>(0);
   const lastUpdateRef = useRef('');
 
@@ -130,48 +133,33 @@ export function StreamingMessage({
       if (agentSourcesRef) setSources([...agentSourcesRef.current]);
       if (thinkingRef) setThinking(thinkingRef.current);
       if (followUpsRef) setFollowUps([...followUpsRef.current]);
+      if (researchStatsRef) setResearchStats(researchStatsRef.current);
       return;
     }
 
     let running = true;
-
     const tick = () => {
       if (!running) return;
-
       const current = contentRef.current;
       if (current !== lastUpdateRef.current) {
         lastUpdateRef.current = current;
         setDisplayContent(current);
       }
-
       if (agentStepsRef) setSteps([...agentStepsRef.current]);
       if (agentSourcesRef) setSources([...agentSourcesRef.current]);
       if (thinkingRef) setThinking(thinkingRef.current);
       if (followUpsRef) setFollowUps([...followUpsRef.current]);
-
+      if (researchStatsRef) setResearchStats(researchStatsRef.current);
       rafRef.current = requestAnimationFrame(tick);
     };
-
     rafRef.current = requestAnimationFrame(tick);
+    return () => { running = false; cancelAnimationFrame(rafRef.current); };
+  }, [isStreaming, contentRef, agentStepsRef, agentSourcesRef, thinkingRef, followUpsRef, researchStatsRef]);
 
-    return () => {
-      running = false;
-      cancelAnimationFrame(rafRef.current);
-    };
-  }, [isStreaming, contentRef, agentStepsRef, agentSourcesRef, thinkingRef, followUpsRef]);
-
-  // Build task groups from real agent steps
-  const taskGroups = useMemo(() => {
-    return buildTaskGroups(steps, isStreaming);
-  }, [steps, isStreaming]);
-
+  const taskGroups = useMemo(() => buildTaskGroups(steps, isStreaming), [steps, isStreaming]);
   const hasTaskGroups = taskGroups.length > 0;
   const hasContent = displayContent.trim().length > 0;
-
-  // Deduplicate sources by URL
-  const uniqueSources = sources.filter(
-    (s, i, arr) => arr.findIndex(x => x.url === s.url) === i
-  );
+  const uniqueSources = sources.filter((s, i, arr) => arr.findIndex(x => x.url === s.url) === i);
 
   return (
     <div className="py-4">
@@ -187,12 +175,12 @@ export function StreamingMessage({
       {/* Thinking section */}
       {thinking && <ThinkingSection content={thinking} />}
 
-      {/* Task groups — real agent research steps in the beautiful UI */}
+      {/* Task groups — real agent research steps */}
       {hasTaskGroups && (
         <AgentSteps taskGroups={taskGroups} defaultCollapsed={false} />
       )}
 
-      {/* Waiting indicator when no content yet but research is happening */}
+      {/* Waiting indicator */}
       {!hasContent && hasTaskGroups && isStreaming && (
         <div className="flex items-center gap-2 py-2 mt-1">
           <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
@@ -203,9 +191,14 @@ export function StreamingMessage({
       {/* Initial thinking indicator */}
       {!hasContent && !hasTaskGroups && isStreaming && <ThinkingIndicator />}
 
+      {/* Research stats banner — appears when research is done and answer starts */}
+      {researchStats && hasContent && (
+        <ResearchBanner stats={researchStats} />
+      )}
+
       {/* Main text content (final answer) */}
       {hasContent && (
-        <div className={hasTaskGroups ? 'mt-3' : ''}>
+        <div>
           <MarkdownContent content={displayContent} />
           {isStreaming && <StreamingCursor />}
         </div>
@@ -213,13 +206,7 @@ export function StreamingMessage({
 
       {/* Sources */}
       {uniqueSources.length > 0 && !isStreaming && (
-        <SourcesList
-          sources={uniqueSources.map(s => ({
-            title: s.title,
-            url: s.url,
-            description: s.description,
-          }))}
-        />
+        <SourcesList sources={uniqueSources.map(s => ({ title: s.title, url: s.url, description: s.description }))} />
       )}
 
       {/* Follow-up suggestions */}
@@ -234,7 +221,7 @@ function ThinkingIndicator() {
   return (
     <div className="flex items-center gap-2 py-3 mt-1">
       <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
-      <span className="text-[13px] text-t-secondary">Thinking</span>
+      <span className="text-[13px] text-t-secondary">Planning research approach...</span>
     </div>
   );
 }

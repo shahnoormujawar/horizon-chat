@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useChatStore } from '@/store/chat-store';
 import { streamChat } from '@/lib/streaming';
 import { generateId } from '@/lib/utils';
-import { Message, AgentStatus, AgentStep, AgentSourceData, STATUS_LABELS } from '@/lib/types';
+import { Message, AgentStatus, AgentStep, AgentSourceData, ResearchStats, STATUS_LABELS } from '@/lib/types';
 import { MessageBubble } from './MessageBubble';
 import { StreamingMessage } from './StreamingMessage';
 import { MessageInput } from './MessageInput';
@@ -48,6 +48,8 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   const followUpsRef = useRef<string[]>([]);
   const thinkingRef = useRef('');
   const statusDetailRef = useRef('');
+  const researchStatsRef = useRef<ResearchStats | null>(null);
+  const phaseRef = useRef(0);
 
   // Voice playback (auto-voice only)
   const { isPlaying, isLoading: isVoiceLoading, play: playVoice, stop: stopVoice } = useVoicePlayback();
@@ -170,6 +172,8 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     followUpsRef.current = [];
     thinkingRef.current = '';
     statusDetailRef.current = '';
+    researchStatsRef.current = null;
+    phaseRef.current = 0;
 
     const controller = new AbortController();
     setAbortController(controller);
@@ -186,15 +190,22 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
       onToken: (token) => {
         contentBufferRef.current += token;
       },
-      onStatusChange: (status, detail) => {
+      onStatusChange: (status, detail, phase) => {
         setAgentStatus(status as AgentStatus);
         if (detail) statusDetailRef.current = detail;
+        if (phase) phaseRef.current = phase;
       },
       onThinking: (content) => {
         thinkingRef.current += content;
         agentStepsRef.current = [
           ...agentStepsRef.current.filter(s => s.type !== 'thinking'),
           { type: 'thinking', content: thinkingRef.current, timestamp: Date.now() },
+        ];
+      },
+      onAnalysis: (content) => {
+        agentStepsRef.current = [
+          ...agentStepsRef.current,
+          { type: 'analysis', content, timestamp: Date.now() },
         ];
       },
       onTaskStart: (title) => {
@@ -224,11 +235,14 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
           agentSourcesRef.current = [...agentSourcesRef.current, ...sources];
         }
       },
+      onResearchStats: (stats) => {
+        researchStatsRef.current = stats;
+      },
       onFollowUps: (suggestions) => {
         followUpsRef.current = suggestions;
       },
       onDone: () => {
-        // Persist content + agent steps + sources + follow-ups
+        // Persist content + agent steps + sources + follow-ups + stats
         const uniqueSources = agentSourcesRef.current.filter(
           (s, i, arr) => arr.findIndex(x => x.url === s.url) === i
         );
@@ -237,6 +251,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
           agentSteps: agentStepsRef.current.length > 0 ? [...agentStepsRef.current] : undefined,
           sources: uniqueSources.length > 0 ? uniqueSources : undefined,
           followUps: followUpsRef.current.length > 0 ? [...followUpsRef.current] : undefined,
+          researchStats: researchStatsRef.current || undefined,
         });
         streamingMessageIdRef.current = null;
         setIsStreaming(false);
@@ -374,6 +389,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                     thinkingRef={thinkingRef}
                     followUpsRef={followUpsRef}
                     statusDetailRef={statusDetailRef}
+                    researchStatsRef={researchStatsRef}
                     onFollowUpClick={handleSend}
                   />
                 );
@@ -406,15 +422,19 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                 className="max-w-[740px] mx-auto px-3 sm:px-5 mb-2"
               >
                 <div className="flex items-center justify-between bg-bg-elevated border border-b rounded-xl px-4 py-2.5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
-                    <span className="text-[13px] text-t-secondary">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse flex-shrink-0" />
+                    <span className="text-[13px] text-t-secondary truncate">
                       {statusDetailRef.current || STATUS_LABELS[agentStatus] || 'Processing...'}
                     </span>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                    {phaseRef.current > 0 && (
+                      <span className="text-[11px] text-accent-blue font-medium px-1.5 py-0.5 rounded bg-accent-blue/10">
+                        Phase {phaseRef.current}
+                      </span>
+                    )}
                     <span className="text-[12px] text-t-tertiary font-mono">{formatTime(streamTimer)}</span>
-                    <span className="text-[12px] text-t-tertiary">{STATUS_LABELS[agentStatus]?.split(' ')[0] || 'Working'}</span>
                     <button className="text-t-tertiary hover:text-t-secondary">
                       <ChevronUp size={14} />
                     </button>

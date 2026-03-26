@@ -92,26 +92,18 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest }: 
       {/* Content */}
       {hasSteps ? (
         <div>
-          {/* Intro text */}
           {parsed.intro && (
             <MarkdownContent content={parsed.intro} />
           )}
-
-          {/* Agent steps */}
           <AgentSteps taskGroups={parsed.taskGroups} />
-
-          {/* Global sources */}
           {parsed.sources.length > 0 && (
             <SourcesList sources={parsed.sources} />
           )}
-
-          {/* Outro text */}
           {parsed.outro && (
             <div className="mt-3">
               <MarkdownContent content={parsed.outro} />
             </div>
           )}
-
         </div>
       ) : (
         <div className="prose">

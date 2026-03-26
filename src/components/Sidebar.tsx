@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useChatStore } from '@/store/chat-store';
 import { Plus, Search, BookOpen, Trash2, Pencil, Check, X, PanelLeftClose, Home, Settings, Grid2X2, Terminal } from 'lucide-react';
 import { truncate } from '@/lib/utils';
@@ -16,7 +16,10 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
   const { chats, activeChatId, createChat, deleteChat, renameChat, setActiveChat } = useChatStore();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (editingId && inputRef.current) {
@@ -24,6 +27,12 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       inputRef.current.select();
     }
   }, [editingId]);
+
+  useEffect(() => {
+    if (searchOpen && searchRef.current) {
+      searchRef.current.focus();
+    }
+  }, [searchOpen]);
 
   const startEditing = (id: string, title: string) => {
     setEditingId(id);
@@ -35,6 +44,20 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       renameChat(editingId, editValue.trim());
     }
     setEditingId(null);
+  };
+
+  const filteredChats = useMemo(() => {
+    if (!searchQuery.trim()) return chats;
+    const q = searchQuery.toLowerCase();
+    return chats.filter(chat => {
+      if (chat.title.toLowerCase().includes(q)) return true;
+      return chat.messages.some(m => m.content.toLowerCase().includes(q));
+    });
+  }, [chats, searchQuery]);
+
+  const closeSearch = () => {
+    setSearchOpen(false);
+    setSearchQuery('');
   };
 
   return (
@@ -60,9 +83,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
       >
         {/* Logo + Toggle */}
         <div className="flex items-center justify-between px-4 py-4">
-          <div className="flex items-center gap-2.5">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d4874e" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-            <span className="font-semibold text-[15px] text-t-primary tracking-tight">horizon</span>
+          <div className="flex items-center flex-1 min-w-0">
+            <img src="/horizon-logo-with-text-dark.svg" alt="Horizon" className="w-full max-w-[150px]" />
           </div>
           <button
             onClick={onToggle}
@@ -81,10 +103,60 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
             <Plus size={16} className="text-t-tertiary" />
             <span>New task</span>
           </button>
-          <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-t-secondary hover:bg-bg-hover hover:text-t-primary transition-all text-[13px]">
+          <button
+            onClick={() => setSearchOpen(!searchOpen)}
+            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-[13px] ${
+              searchOpen
+                ? 'bg-bg-hover text-t-primary'
+                : 'text-t-secondary hover:bg-bg-hover hover:text-t-primary'
+            }`}
+          >
             <Search size={16} className="text-t-tertiary" />
             <span>Search</span>
           </button>
+
+          {/* Search input */}
+          <AnimatePresence>
+            {searchOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                transition={{ duration: 0.15 }}
+                className="overflow-hidden"
+              >
+                <div className="px-1 pb-1">
+                  <div className="flex items-center gap-2 bg-bg-input border border-b rounded-lg px-2.5 py-1.5">
+                    <Search size={13} className="text-t-tertiary flex-shrink-0" />
+                    <input
+                      ref={searchRef}
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') closeSearch();
+                      }}
+                      placeholder="Search chats..."
+                      className="flex-1 bg-transparent text-t-primary text-[12px] placeholder:text-t-tertiary outline-none"
+                    />
+                    {searchQuery && (
+                      <button
+                        onClick={() => setSearchQuery('')}
+                        className="text-t-tertiary hover:text-t-secondary"
+                      >
+                        <X size={12} />
+                      </button>
+                    )}
+                  </div>
+                  {searchQuery && (
+                    <p className="text-[11px] text-t-tertiary px-1 pt-1">
+                      {filteredChats.length} {filteredChats.length === 1 ? 'result' : 'results'}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-t-secondary hover:bg-bg-hover hover:text-t-primary transition-all text-[13px]">
             <BookOpen size={16} className="text-t-tertiary" />
             <span>Library</span>
@@ -94,11 +166,13 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         {/* All Tasks Section */}
         <div className="mt-6 px-2 flex-1 overflow-hidden flex flex-col">
           <div className="flex items-center justify-between px-3 mb-1">
-            <span className="text-[11px] font-medium text-t-tertiary uppercase tracking-wider">All tasks</span>
+            <span className="text-[11px] font-medium text-t-tertiary uppercase tracking-wider">
+              {searchQuery ? 'Search results' : 'All tasks'}
+            </span>
           </div>
 
           <div className="flex-1 overflow-y-auto space-y-0.5 mt-1">
-            {chats.map(chat => (
+            {filteredChats.map(chat => (
               <div
                 key={chat.id}
                 className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all ${
@@ -108,6 +182,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 }`}
                 onClick={() => {
                   setActiveChat(chat.id);
+                  if (searchOpen) closeSearch();
                   if (window.innerWidth < 1024) onToggle();
                 }}
               >
@@ -169,9 +244,11 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
               </div>
             ))}
 
-            {chats.length === 0 && (
+            {filteredChats.length === 0 && (
               <div className="px-3 py-6 text-center">
-                <p className="text-t-tertiary text-xs">No tasks yet</p>
+                <p className="text-t-tertiary text-xs">
+                  {searchQuery ? 'No matching chats' : 'No tasks yet'}
+                </p>
               </div>
             )}
           </div>

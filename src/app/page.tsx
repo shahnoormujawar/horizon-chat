@@ -9,11 +9,13 @@ import { useChatStore } from '@/store/chat-store';
 export default function Home() {
   const { isSignedIn, isLoaded } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Open sidebar by default on desktop
   useEffect(() => {
+    setMounted(true);
     if (window.innerWidth >= 1024) setSidebarOpen(true);
   }, []);
+
   const hydrate = useChatStore(s => s.hydrate);
   const [hydrated, setHydrated] = useState(false);
 
@@ -22,18 +24,16 @@ export default function Home() {
     setHydrated(true);
   }, [hydrate]);
 
-  if (!isLoaded || !hydrated) {
+  if (!mounted || !isLoaded || !hydrated) {
+    // Return minimal shell for SSR, loading UI shows after mount
+    if (!mounted) {
+      return <div className="h-[100dvh] bg-bg-primary" />;
+    }
     return (
       <div className="h-[100dvh] flex items-center justify-center bg-bg-primary">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-10 h-10 rounded-xl bg-bg-elevated flex items-center justify-center">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#d4874e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          </div>
-          <div className="flex gap-1.5">
-            <div className="w-1.5 h-1.5 rounded-full bg-t-tertiary animate-pulse-dot" />
-            <div className="w-1.5 h-1.5 rounded-full bg-t-tertiary animate-pulse-dot [animation-delay:0.2s]" />
-            <div className="w-1.5 h-1.5 rounded-full bg-t-tertiary animate-pulse-dot [animation-delay:0.4s]" />
-          </div>
+        <div className="flex flex-col items-center gap-8">
+          <img src="/horizon-logo-with-text-dark.svg" alt="Horizon" className="w-[220px] sm:w-[280px]" />
+          <div className="w-8 h-8 border-[2.5px] border-t-tertiary/30 border-t-accent rounded-full animate-spin" />
         </div>
       </div>
     );

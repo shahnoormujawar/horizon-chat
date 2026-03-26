@@ -5,6 +5,7 @@ A premium AI chat application with an agentic, step-by-step interface inspired b
 ![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)
 ![Claude](https://img.shields.io/badge/Claude-Sonnet-orange?logo=anthropic)
+![ElevenLabs](https://img.shields.io/badge/ElevenLabs-Voice-black?logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0id2hpdGUiPjxyZWN0IHg9IjgiIHk9IjIiIHdpZHRoPSIzIiBoZWlnaHQ9IjIwIi8+PHJlY3QgeD0iMTMiIHk9IjIiIHdpZHRoPSIzIiBoZWlnaHQ9IjIwIi8+PC9zdmc+)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38bdf8?logo=tailwindcss)
 
 ---
@@ -29,6 +30,18 @@ Most open-source chat UIs dump raw markdown on screen. Horizon gives you an **ag
 - Sources appear in a 2-column grid within each task group or globally at the bottom
 - Cards show title, domain, and description with external link indicators
 - Sources without URLs display a book icon for general knowledge references
+
+### Voice Chat (ElevenLabs)
+- **Voice input** — click the mic button to dictate messages with live waveform visualization and real-time transcript preview
+- Recording UI replaces the input area with animated audio bars, elapsed timer, cancel (X) and confirm (checkmark) buttons
+- Keyboard shortcuts: **Enter** to send, **Esc** to cancel while recording
+- **Voice output** — hover any AI message to reveal a speaker icon; click to hear it read aloud via ElevenLabs TTS
+- **Auto-voice mode** — toggle "Voice" in the header to automatically read every AI response out loud
+- Loading spinner on the play button while TTS audio is being fetched, animated equalizer bar during playback
+- Markdown, code blocks, and agent markers are stripped for clean, natural speech
+- Browser's SpeechRecognition API handles speech-to-text (free, no extra API needed)
+- ElevenLabs Turbo v2.5 model for fast, premium-quality voice synthesis
+- Auto-restarts recognition if the browser silences it, so long dictations work seamlessly
 
 ### Buttery Smooth Streaming
 - **Zero-flicker streaming** — tokens are buffered in a ref and rendered via `requestAnimationFrame`, not through React state on every token
@@ -90,6 +103,7 @@ Most open-source chat UIs dump raw markdown on screen. Horizon gives you an **ag
 | Auth | Clerk (@clerk/nextjs v7) |
 | State | Zustand 5 |
 | AI | Claude via OpenRouter API |
+| Voice | ElevenLabs TTS + Web Speech API |
 | Animations | Framer Motion 12 |
 | Markdown | react-markdown + remark-gfm |
 | Icons | Lucide React |
@@ -102,6 +116,7 @@ Most open-source chat UIs dump raw markdown on screen. Horizon gives you an **ag
 
 - Node.js 18+
 - An [OpenRouter](https://openrouter.ai) API key
+- An [ElevenLabs](https://elevenlabs.io) API key (for voice chat)
 - A [Clerk](https://clerk.com) application (free tier works)
 
 ### Setup
@@ -121,6 +136,7 @@ Most open-source chat UIs dump raw markdown on screen. Horizon gives you an **ag
    ```env
    OPENROUTER_API_KEY=sk-or-...
    OPENROUTER_MODEL=anthropic/claude-sonnet-4  # or any model on OpenRouter
+   ELEVENLABS_API_KEY=sk_...                   # for voice chat
    NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_...
    CLERK_SECRET_KEY=sk_...
    ```
@@ -139,6 +155,7 @@ Most open-source chat UIs dump raw markdown on screen. Horizon gives you an **ag
 src/
 ├── app/
 │   ├── api/chat/route.ts      # OpenRouter proxy with system prompt
+│   ├── api/voice/tts/route.ts # ElevenLabs TTS streaming endpoint
 │   ├── globals.css             # Theme, prose styles, scrollbar
 │   ├── layout.tsx              # Clerk provider, viewport config
 │   └── page.tsx                # Auth gate, hydration, layout shell
@@ -151,6 +168,9 @@ src/
 │   ├── Sidebar.tsx             # Chat list, nav, mobile overlay
 │   ├── StatusIndicator.tsx     # Streaming status pill
 │   └── StreamingMessage.tsx    # rAF-based live rendering
+├── hooks/
+│   ├── useVoiceRecorder.ts    # Speech recognition + audio visualizer
+│   └── useVoicePlayback.ts    # ElevenLabs TTS playback management
 ├── lib/
 │   ├── parse-agent-steps.ts    # Structured response parser
 │   ├── streaming.ts            # SSE stream reader + status transitions

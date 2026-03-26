@@ -8,7 +8,8 @@ import { Message, AgentStatus, STATUS_LABELS } from '@/lib/types';
 import { MessageBubble } from './MessageBubble';
 import { StreamingMessage } from './StreamingMessage';
 import { MessageInput } from './MessageInput';
-import { Menu, RotateCcw, Bell, ChevronDown, Share2, MoreHorizontal, ChevronUp } from 'lucide-react';
+import { useVoicePlayback } from '@/hooks/useVoicePlayback';
+import { Menu, RotateCcw, Bell, ChevronDown, Share2, MoreHorizontal, ChevronUp, Volume2, VolumeX } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserButton } from '@clerk/nextjs';
 
@@ -40,6 +41,11 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   const [streamTimer, setStreamTimer] = useState(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Voice playback (auto-voice only)
+  const { isPlaying, isLoading: isVoiceLoading, play: playVoice, stop: stopVoice } = useVoicePlayback();
+  const [autoVoice, setAutoVoice] = useState(false);
+  const lastCompletedMessageRef = useRef<string | null>(null);
+
   const activeChat = getActiveChat();
   const messages = activeChat?.messages || [];
 
@@ -53,17 +59,14 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
       if (container) {
         container.scrollTop = container.scrollHeight;
       }
-      // Reset flag after scroll settles
       setTimeout(() => { isAutoScrollingRef.current = false; }, 50);
     }
   }, []);
 
-  // Scroll on new messages
   useEffect(() => {
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Auto-scroll during streaming — use rAF for smoothness
   useEffect(() => {
     if (!isStreaming) return;
     let rafId: number;
@@ -80,7 +83,6 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     return () => cancelAnimationFrame(rafId);
   }, [isStreaming]);
 
-  // Reset userScrolled when streaming starts
   useEffect(() => {
     if (isStreaming) {
       userScrolledRef.current = false;
@@ -88,7 +90,21 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     }
   }, [isStreaming]);
 
-  // Stream timer
+  // Auto-voice: play latest assistant message when streaming completes
+  useEffect(() => {
+    if (!autoVoice || isStreaming) return;
+    const lastMsg = messages[messages.length - 1];
+    if (
+      lastMsg &&
+      lastMsg.role === 'assistant' &&
+      lastMsg.content &&
+      lastMsg.id !== lastCompletedMessageRef.current
+    ) {
+      lastCompletedMessageRef.current = lastMsg.id;
+      playVoice(lastMsg.content, lastMsg.id);
+    }
+  }, [autoVoice, isStreaming, messages, playVoice]);
+
   useEffect(() => {
     if (isStreaming) {
       setStreamTimer(0);
@@ -105,7 +121,6 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   }, [isStreaming]);
 
   const handleScroll = () => {
-    // Ignore scroll events triggered by our auto-scroll
     if (isAutoScrollingRef.current) return;
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -116,6 +131,9 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   };
 
   const handleSend = useCallback(async (content: string) => {
+    // Stop any voice playback when sending a new message
+    stopVoice();
+
     let chatId = activeChatId;
     if (!chatId) {
       chatId = createChat();
@@ -154,14 +172,12 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     await streamChat({
       messages: allMessages,
       onToken: (token) => {
-        // Only buffer — StreamingMessage reads from ref via rAF
         contentBufferRef.current += token;
       },
       onStatusChange: (status) => {
         setAgentStatus(status);
       },
       onDone: () => {
-        // Flush final content to store for persistence
         updateMessage(chatId!, assistantMessageId, contentBufferRef.current);
         streamingMessageIdRef.current = null;
         setIsStreaming(false);
@@ -177,12 +193,11 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
       },
       signal: controller.signal,
     });
-  }, [activeChatId, createChat, addMessage, updateMessage, setAbortController, setIsStreaming, setAgentStatus, getActiveChat]);
+  }, [activeChatId, createChat, addMessage, updateMessage, setAbortController, setIsStreaming, setAgentStatus, getActiveChat, stopVoice]);
 
   const handleStop = useCallback(() => {
     const { abortController } = useChatStore.getState();
     abortController?.abort();
-    // Flush whatever we have to the store
     if (streamingMessageIdRef.current && activeChatId && contentBufferRef.current) {
       updateMessage(activeChatId, streamingMessageIdRef.current, contentBufferRef.current);
     }
@@ -228,6 +243,23 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
         </div>
 
         <div className="flex items-center gap-0.5 sm:gap-1">
+          {/* Auto-voice toggle */}
+          <button
+            onClick={() => {
+              setAutoVoice(!autoVoice);
+              if (autoVoice) stopVoice();
+            }}
+            className={`flex items-center gap-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg transition-all text-[12px] sm:text-[13px] font-medium ${
+              autoVoice
+                ? 'bg-accent/15 text-accent hover:bg-accent/20'
+                : 'hover:bg-bg-hover text-t-tertiary hover:text-t-secondary'
+            }`}
+            title={autoVoice ? 'Disable auto voice — responses won\'t be read aloud' : 'Enable auto voice — responses will be read aloud'}
+          >
+            {autoVoice ? <Volume2 size={14} /> : <VolumeX size={14} />}
+            <span className="hidden sm:inline">{autoVoice ? 'Voice On' : 'Voice'}</span>
+          </button>
+
           <span className="hidden sm:inline text-accent text-[12px] font-medium px-2 cursor-pointer hover:underline">Upgrade</span>
           <button className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-bg-hover text-t-tertiary hover:text-t-secondary transition-colors text-[13px]">
             <Share2 size={14} />

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useChatStore } from '@/store/chat-store';
 import { streamChat } from '@/lib/streaming';
 import { generateId } from '@/lib/utils';
-import { Message, AgentStatus, AgentStep, AgentSourceData, ResearchStats, STATUS_LABELS } from '@/lib/types';
+import { Message, AgentStatus, AgentStep, AgentSourceData, AgentFile, ResearchStats, STATUS_LABELS } from '@/lib/types';
 import { MessageBubble } from './MessageBubble';
 import { StreamingMessage } from './StreamingMessage';
 import { MessageInput } from './MessageInput';
@@ -49,6 +49,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   const thinkingRef = useRef('');
   const statusDetailRef = useRef('');
   const researchStatsRef = useRef<ResearchStats | null>(null);
+  const filesRef = useRef<AgentFile[]>([]);
   const phaseRef = useRef(0);
 
   // Voice playback (auto-voice only)
@@ -173,6 +174,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     thinkingRef.current = '';
     statusDetailRef.current = '';
     researchStatsRef.current = null;
+    filesRef.current = [];
     phaseRef.current = 0;
 
     const controller = new AbortController();
@@ -235,6 +237,9 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
           agentSourcesRef.current = [...agentSourcesRef.current, ...sources];
         }
       },
+      onFileCreated: (file) => {
+        filesRef.current = [...filesRef.current, file];
+      },
       onResearchStats: (stats) => {
         researchStatsRef.current = stats;
       },
@@ -252,6 +257,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
           sources: uniqueSources.length > 0 ? uniqueSources : undefined,
           followUps: followUpsRef.current.length > 0 ? [...followUpsRef.current] : undefined,
           researchStats: researchStatsRef.current || undefined,
+          files: filesRef.current.length > 0 ? [...filesRef.current] : undefined,
         });
         streamingMessageIdRef.current = null;
         setIsStreaming(false);
@@ -390,6 +396,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                     followUpsRef={followUpsRef}
                     statusDetailRef={statusDetailRef}
                     researchStatsRef={researchStatsRef}
+                    filesRef={filesRef}
                     onFollowUpClick={handleSend}
                   />
                 );

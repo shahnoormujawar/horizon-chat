@@ -231,9 +231,16 @@ export async function runAgentLoop(
           detail: `Reading: ${(args.url as string || '').replace(/^https?:\/\/(www\.)?/, '').slice(0, 50)}`,
           phase: phaseCount,
         });
+      } else if (fnName === 'create_file') {
+        emit({
+          type: 'status',
+          status: 'generating',
+          detail: `Creating file: ${args.filename || ''}`,
+          phase: phaseCount,
+        });
       }
 
-      const result: ToolResult = await executeTool(fnName, args);
+      const result = await executeTool(fnName, args);
       const summary = summarizeToolResult(fnName, result);
 
       // Track source URLs
@@ -241,6 +248,16 @@ export async function runAgentLoop(
         for (const s of result.sources) {
           allSourceUrls.add(s.url);
         }
+      }
+
+      // Emit file_created event for downloadable files
+      if (result.file) {
+        emit({
+          type: 'file_created',
+          filename: result.file.filename,
+          content: result.file.content,
+          description: result.file.description,
+        });
       }
 
       emit({

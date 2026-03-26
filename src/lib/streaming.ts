@@ -1,4 +1,4 @@
-import { Message, AgentSourceData, ResearchStats } from './types';
+import { Message, AgentSourceData, AgentFile, ResearchStats } from './types';
 
 interface StreamCallbacks {
   messages: Message[];
@@ -10,6 +10,7 @@ interface StreamCallbacks {
   onTaskDone: (title: string) => void;
   onToolStart: (tool: string, args: Record<string, unknown>) => void;
   onToolResult: (tool: string, summary: string, sources?: AgentSourceData[]) => void;
+  onFileCreated: (file: AgentFile) => void;
   onResearchStats: (stats: ResearchStats) => void;
   onFollowUps: (suggestions: string[]) => void;
   onDone: () => void;
@@ -27,6 +28,7 @@ export async function streamChat({
   onTaskDone,
   onToolStart,
   onToolResult,
+  onFileCreated,
   onResearchStats,
   onFollowUps,
   onDone,
@@ -102,6 +104,14 @@ export async function streamChat({
 
             case 'tool_result':
               onToolResult(event.tool, event.summary, event.sources);
+              break;
+
+            case 'file_created':
+              onFileCreated({
+                filename: event.filename,
+                content: event.content,
+                description: event.description,
+              });
               break;
 
             case 'text_delta':

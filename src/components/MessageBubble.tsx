@@ -9,6 +9,7 @@ import { buildTaskGroups } from '@/lib/build-task-groups';
 import { CodeBlock } from './CodeBlock';
 import { AgentSteps, SourcesList } from './AgentSteps';
 import { ResearchBanner } from './ResearchBanner';
+import { FileCardList } from './FileCard';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Brain, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -182,6 +183,11 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
           <div className={message.researchStats ? '' : 'mt-3'}>
             <MarkdownContent content={message.content} />
           </div>
+        )}
+
+        {/* File download cards */}
+        {message.files && message.files.length > 0 && (
+          <FileCardList files={message.files} animated={false} />
         )}
 
         {/* Sources from real Tavily results */}

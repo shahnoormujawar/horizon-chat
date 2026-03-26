@@ -3,11 +3,12 @@
 import { useEffect, useState, useRef, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { AgentStep, AgentSourceData, ResearchStats } from '@/lib/types';
+import { AgentStep, AgentSourceData, AgentFile, ResearchStats } from '@/lib/types';
 import { buildTaskGroups } from '@/lib/build-task-groups';
 import { CodeBlock } from './CodeBlock';
 import { AgentSteps, SourcesList } from './AgentSteps';
 import { ResearchBanner } from './ResearchBanner';
+import { FileCardList } from './FileCard';
 import { Brain, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -20,6 +21,7 @@ interface StreamingMessageProps {
   followUpsRef?: React.MutableRefObject<string[]>;
   statusDetailRef?: React.MutableRefObject<string>;
   researchStatsRef?: React.MutableRefObject<ResearchStats | null>;
+  filesRef?: React.MutableRefObject<AgentFile[]>;
   onFollowUpClick?: (text: string) => void;
 }
 
@@ -115,6 +117,7 @@ export function StreamingMessage({
   thinkingRef,
   followUpsRef,
   researchStatsRef,
+  filesRef,
   onFollowUpClick,
 }: StreamingMessageProps) {
   const [displayContent, setDisplayContent] = useState('');
@@ -123,6 +126,7 @@ export function StreamingMessage({
   const [thinking, setThinking] = useState('');
   const [followUps, setFollowUps] = useState<string[]>([]);
   const [researchStats, setResearchStats] = useState<ResearchStats | null>(null);
+  const [files, setFiles] = useState<AgentFile[]>([]);
   const rafRef = useRef<number>(0);
   const lastUpdateRef = useRef('');
 
@@ -134,6 +138,7 @@ export function StreamingMessage({
       if (thinkingRef) setThinking(thinkingRef.current);
       if (followUpsRef) setFollowUps([...followUpsRef.current]);
       if (researchStatsRef) setResearchStats(researchStatsRef.current);
+      if (filesRef) setFiles([...filesRef.current]);
       return;
     }
 
@@ -150,11 +155,12 @@ export function StreamingMessage({
       if (thinkingRef) setThinking(thinkingRef.current);
       if (followUpsRef) setFollowUps([...followUpsRef.current]);
       if (researchStatsRef) setResearchStats(researchStatsRef.current);
+      if (filesRef) setFiles([...filesRef.current]);
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
     return () => { running = false; cancelAnimationFrame(rafRef.current); };
-  }, [isStreaming, contentRef, agentStepsRef, agentSourcesRef, thinkingRef, followUpsRef, researchStatsRef]);
+  }, [isStreaming, contentRef, agentStepsRef, agentSourcesRef, thinkingRef, followUpsRef, researchStatsRef, filesRef]);
 
   const taskGroups = useMemo(() => buildTaskGroups(steps, isStreaming), [steps, isStreaming]);
   const hasTaskGroups = taskGroups.length > 0;
@@ -203,6 +209,9 @@ export function StreamingMessage({
           {isStreaming && <StreamingCursor />}
         </div>
       )}
+
+      {/* File download cards */}
+      {files.length > 0 && <FileCardList files={files} />}
 
       {/* Sources */}
       {uniqueSources.length > 0 && !isStreaming && (

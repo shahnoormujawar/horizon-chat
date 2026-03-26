@@ -8,6 +8,7 @@ export type AgentEvent =
   | { type: 'tool_start'; tool: string; args: Record<string, unknown> }
   | { type: 'tool_result'; tool: string; summary: string; sources?: AgentSourceData[] }
   | { type: 'text_delta'; content: string }
+  | { type: 'file_created'; filename: string; content: string; description?: string }
   | { type: 'research_stats'; stats: ResearchStats }
   | { type: 'follow_ups'; suggestions: string[] }
   | { type: 'error'; message: string }

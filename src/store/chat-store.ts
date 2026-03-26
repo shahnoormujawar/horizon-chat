@@ -22,7 +22,7 @@ interface ChatState {
   // Messages
   addMessage: (chatId: string, message: Message) => void;
   updateMessage: (chatId: string, messageId: string, content: string) => void;
-  updateMessageFull: (chatId: string, messageId: string, updates: Partial<Pick<Message, 'content' | 'agentSteps' | 'sources' | 'followUps' | 'researchStats'>>) => void;
+  updateMessageFull: (chatId: string, messageId: string, updates: Partial<Pick<Message, 'content' | 'agentSteps' | 'sources' | 'followUps' | 'researchStats' | 'files'>>) => void;
   deleteLastAssistantMessage: (chatId: string) => void;
 
   // Streaming state

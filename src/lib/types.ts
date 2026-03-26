@@ -37,6 +37,12 @@ export interface AgentStep {
   timestamp: number;
 }
 
+export interface AgentFile {
+  filename: string;
+  content: string;
+  description?: string;
+}
+
 export interface Message {
   id: string;
   role: MessageRole;
@@ -47,6 +53,7 @@ export interface Message {
   sources?: AgentSourceData[];
   followUps?: string[];
   researchStats?: ResearchStats;
+  files?: AgentFile[];
 }
 
 export interface Chat {

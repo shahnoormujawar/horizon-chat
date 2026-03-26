@@ -45,4 +45,30 @@ export const AGENT_TOOLS: ToolDefinition[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'create_file',
+      description:
+        'Create a downloadable file for the user. Use this when the user asks you to generate a report, create a document, write code to a file, export data as CSV/JSON, create an HTML page, or produce any downloadable artifact. The file will appear as a download card in the chat. Supports any text-based format: .md, .txt, .html, .css, .js, .ts, .py, .json, .csv, .xml, .yaml, .sql, .sh, etc.',
+      parameters: {
+        type: 'object',
+        properties: {
+          filename: {
+            type: 'string',
+            description: 'The filename with extension, e.g. "report.md", "analysis.csv", "app.html", "script.py"',
+          },
+          content: {
+            type: 'string',
+            description: 'The full file content to write',
+          },
+          description: {
+            type: 'string',
+            description: 'A brief 1-sentence description of what this file contains',
+          },
+        },
+        required: ['filename', 'content'],
+      },
+    },
+  },
 ];

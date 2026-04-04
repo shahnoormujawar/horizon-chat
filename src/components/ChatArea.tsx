@@ -9,8 +9,8 @@ import { MessageBubble } from './MessageBubble';
 import { StreamingMessage } from './StreamingMessage';
 import { MessageInput } from './MessageInput';
 import { useVoicePlayback } from '@/hooks/useVoicePlayback';
-import { Menu, RotateCcw, Bell, ChevronDown, Share2, MoreHorizontal, ChevronUp, Volume2, VolumeX } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Menu, RotateCcw, Bell, ChevronDown, Share2, MoreHorizontal, ChevronUp, Volume2, VolumeX, ArrowDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { UserButton } from '@clerk/nextjs';
 
 interface ChatAreaProps {
@@ -62,6 +62,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
 
   const userScrolledRef = useRef(false);
   const isAutoScrollingRef = useRef(false);
+  const [hasUnread, setHasUnread] = useState(false);
 
   const scrollToBottom = useCallback(() => {
     if (!userScrolledRef.current) {
@@ -139,7 +140,15 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 150;
     userScrolledRef.current = !isAtBottom;
     setUserScrolled(!isAtBottom);
+    if (isAtBottom) setHasUnread(false);
   };
+
+  // Mark unread when streaming content arrives and user has scrolled up
+  useEffect(() => {
+    if (isStreaming && userScrolledRef.current) {
+      setHasUnread(true);
+    }
+  }, [isStreaming, messages.length]);
 
   const handleSend = useCallback(async (content: string) => {
     stopVoice();
@@ -297,6 +306,16 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     }, 50);
   }, [activeChatId, messages, deleteLastAssistantMessage, handleSend]);
 
+  // Ambient background — bloom on when streaming, fade out when done
+  useEffect(() => {
+    if (isStreaming) {
+      document.body.classList.add('is-streaming');
+    } else {
+      document.body.classList.remove('is-streaming');
+    }
+    return () => document.body.classList.remove('is-streaming');
+  }, [isStreaming]);
+
   const formatTime = (s: number) => {
     const m = Math.floor(s / 60);
     const sec = s % 60;
@@ -370,11 +389,14 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
         </div>
       </header>
 
+      {/* Scroll area + FAB wrapper */}
+      <div className="relative flex-1 min-h-0">
+
       {/* Messages or Empty State */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none"
+        className="h-full overflow-y-auto overflow-x-hidden overscroll-none"
         style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
         {messages.length === 0 ? (
@@ -408,6 +430,8 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                   key={msg.id}
                   message={msg}
                   isLatest={isLast}
+                  index={i}
+                  immediate={isStreaming && i === messages.length - 2}
                   onFollowUpClick={handleSend}
                 />
               );
@@ -416,6 +440,36 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
           </div>
         )}
       </div>
+
+      {/* Scroll-to-bottom FAB */}
+      <AnimatePresence>
+        {userScrolled && messages.length > 0 && (
+          <motion.button
+            initial={{ opacity: 0, y: 8, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 8, scale: 0.9 }}
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            onClick={() => {
+              userScrolledRef.current = false;
+              setUserScrolled(false);
+              setHasUnread(false);
+              const container = scrollContainerRef.current;
+              if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
+            }}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3.5 py-2 rounded-full glass-elevated border border-b/60 shadow-lg shadow-black/30 text-t-secondary hover:text-t-primary hover:border-accent/30 transition-colors z-10"
+          >
+            {hasUnread && (
+              <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />
+            )}
+            <ArrowDown size={14} strokeWidth={2.5} />
+            <span className="text-[12px] font-medium">
+              {hasUnread ? 'New message' : 'Scroll to bottom'}
+            </span>
+          </motion.button>
+        )}
+      </AnimatePresence>
+
+      </div>{/* end scroll area + FAB wrapper */}
 
       {/* Bottom area with status bar + input */}
       {messages.length > 0 && (
@@ -433,7 +487,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="thinking-orb-sm flex-shrink-0" />
                   <span className="text-[13px] text-t-secondary truncate">
-                    Horizon is <span className="gradient-text-accent font-medium">{statusDetailRef.current || STATUS_LABELS[agentStatus] || 'thinking'}</span>...
+                    Horizon is <span className="text-accent font-medium">{statusDetailRef.current || STATUS_LABELS[agentStatus] || 'thinking'}</span>...
                   </span>
                 </div>
                 <div className="flex items-center gap-3 flex-shrink-0 ml-3">
@@ -496,7 +550,7 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
           transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
           className="flex justify-center mb-6 sm:mb-8"
         >
-          <div className="w-[56px] h-[56px] rounded-2xl bg-gradient-to-br from-blue-500/25 via-blue-600/15 to-purple-500/10 flex items-center justify-center border border-accent/30 shadow-lg shadow-accent/15 glow-accent-sm">
+          <div className="w-[56px] h-[56px] rounded-2xl bg-bg-elevated flex items-center justify-center border border-b">
             <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2L2 7l10 5 10-5-10-5z"/>
               <path d="M2 17l10 5 10-5"/>
@@ -510,7 +564,7 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
-          className="text-[1.75rem] sm:text-[2.4rem] font-semibold leading-tight mb-2 gradient-text-warm tracking-tight"
+          className="text-[1.75rem] sm:text-[2.4rem] font-semibold leading-tight mb-2 text-t-primary tracking-tight"
         >
           What can I help you with?
         </motion.h1>

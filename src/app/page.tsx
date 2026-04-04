@@ -65,7 +65,7 @@ export default function Home() {
   }
 
   return (
-    <div className="fixed inset-0 flex bg-bg-primary overflow-hidden">
+    <div className="fixed inset-0 flex overflow-hidden">
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       <ChatArea sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
     </div>

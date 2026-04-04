@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useChatStore } from '@/store/chat-store';
-import { Plus, Search, BookOpen, Trash2, Pencil, Check, X, PanelLeftClose, Home, Settings, Grid2X2, Terminal } from 'lucide-react';
+import { Plus, Search, BookOpen, Trash2, Pencil, Check, X, PanelLeftClose, Settings, Grid2X2, Terminal, MessageSquare } from 'lucide-react';
 import { truncate } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { UserButton } from '@clerk/nextjs';
@@ -79,42 +79,45 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         initial={false}
         animate={{ x: isOpen ? 0 : -260 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        className="fixed left-0 top-0 bottom-0 w-[260px] bg-bg-sidebar border-r border-b z-40 flex flex-col"
+        className="fixed left-0 top-0 bottom-0 w-[260px] z-40 flex flex-col border-r border-b/50"
         style={{
-          background: 'linear-gradient(180deg, rgba(16,16,18,0.98) 0%, rgba(20,20,22,0.98) 100%)',
+          background: 'linear-gradient(180deg, #0e0e11 0%, #0c0c0f 100%)',
         }}
       >
-        {/* Logo + Toggle */}
-        <div className="flex items-center justify-between px-4 py-4">
+        {/* Logo + collapse */}
+        <div className="flex items-center justify-between px-4 pt-4 pb-3">
           <div className="flex items-center flex-1 min-w-0">
-            <img src="/horizon-logo-with-text-dark.svg" alt="Horizon" className="w-full max-w-[150px]" />
+            <img src="/horizon-logo-with-text-dark.svg" alt="Horizon" className="w-full max-w-[130px] opacity-90" />
           </div>
           <button
             onClick={onToggle}
             className="w-7 h-7 rounded-md hover:bg-bg-hover flex items-center justify-center text-t-tertiary hover:text-t-secondary transition-colors"
           >
-            <PanelLeftClose size={16} />
+            <PanelLeftClose size={15} />
           </button>
         </div>
 
-        {/* Nav Items */}
-        <div className="px-2 space-y-0.5">
+        {/* Nav */}
+        <div className="px-2.5 space-y-0.5">
+          {/* New task — primary action */}
           <button
             onClick={() => createChat()}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-t-secondary hover:bg-accent/8 hover:text-accent border border-transparent hover:border-accent/12 transition-all text-[13px] group"
+            className="sidebar-new-btn w-full flex items-center gap-2.5 px-3 py-[9px] rounded-xl text-[13px] font-medium transition-all group"
           >
-            <Plus size={16} className="text-t-tertiary group-hover:text-accent transition-colors" />
-            <span>New task</span>
+            <div className="w-5 h-5 rounded-md bg-accent/20 group-hover:bg-accent/30 flex items-center justify-center transition-colors flex-shrink-0">
+              <Plus size={13} className="text-accent" strokeWidth={2.5} />
+            </div>
+            <span className="text-t-secondary group-hover:text-t-primary transition-colors">New task</span>
           </button>
+
+          {/* Search */}
           <button
             onClick={() => setSearchOpen(!searchOpen)}
-            className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-all text-[13px] ${
-              searchOpen
-                ? 'bg-bg-hover text-t-primary'
-                : 'text-t-secondary hover:bg-bg-hover hover:text-t-primary'
+            className={`w-full flex items-center gap-2.5 px-3 py-[9px] rounded-xl text-[13px] transition-all ${
+              searchOpen ? 'bg-bg-hover text-t-primary' : 'text-t-secondary hover:bg-bg-hover/60 hover:text-t-primary'
             }`}
           >
-            <Search size={16} className="text-t-tertiary" />
+            <Search size={15} className="text-t-tertiary flex-shrink-0" />
             <span>Search</span>
           </button>
 
@@ -130,28 +133,23 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
               >
                 <div className="px-1 pb-1">
                   <div className="flex items-center gap-2 bg-bg-input border border-b rounded-lg px-2.5 py-1.5">
-                    <Search size={13} className="text-t-tertiary flex-shrink-0" />
+                    <Search size={12} className="text-t-tertiary flex-shrink-0" />
                     <input
                       ref={searchRef}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Escape') closeSearch();
-                      }}
+                      onKeyDown={(e) => { if (e.key === 'Escape') closeSearch(); }}
                       placeholder="Search chats..."
                       className="flex-1 bg-transparent text-t-primary text-[12px] placeholder:text-t-tertiary outline-none"
                     />
                     {searchQuery && (
-                      <button
-                        onClick={() => setSearchQuery('')}
-                        className="text-t-tertiary hover:text-t-secondary"
-                      >
+                      <button onClick={() => setSearchQuery('')} className="text-t-tertiary hover:text-t-secondary">
                         <X size={12} />
                       </button>
                     )}
                   </div>
                   {searchQuery && (
-                    <p className="text-[11px] text-t-tertiary px-1 pt-1">
+                    <p className="text-[11px] text-t-tertiary px-1 pt-1.5">
                       {filteredChats.length} {filteredChats.length === 1 ? 'result' : 'results'}
                     </p>
                   )}
@@ -160,96 +158,117 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
             )}
           </AnimatePresence>
 
-          <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-t-secondary hover:bg-bg-hover hover:text-t-primary transition-all text-[13px]">
-            <BookOpen size={16} className="text-t-tertiary" />
+          <button className="w-full flex items-center gap-2.5 px-3 py-[9px] rounded-xl text-t-secondary hover:bg-bg-hover/60 hover:text-t-primary transition-all text-[13px]">
+            <BookOpen size={15} className="text-t-tertiary flex-shrink-0" />
             <span>Library</span>
           </button>
         </div>
 
-        {/* All Tasks Section */}
-        <div className="mt-6 px-2 flex-1 overflow-hidden flex flex-col">
-          <div className="flex items-center justify-between px-3 mb-1">
-            <span className="text-[11px] font-medium text-t-tertiary uppercase tracking-wider">
-              {searchQuery ? 'Search results' : 'All tasks'}
+        {/* Divider */}
+        <div className="mx-4 my-3 h-px bg-b/60" />
+
+        {/* Chat list */}
+        <div className="px-2.5 flex-1 overflow-hidden flex flex-col min-h-0">
+          <div className="flex items-center px-3 mb-2">
+            <span className="text-[10.5px] font-semibold text-t-tertiary uppercase tracking-widest">
+              {searchQuery ? 'Results' : 'All tasks'}
             </span>
           </div>
 
-          <div className="flex-1 overflow-y-auto space-y-0.5 mt-1">
-            {filteredChats.map(chat => (
-              <div
-                key={chat.id}
-                className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all ${
-                  activeChatId === chat.id
-                    ? 'bg-gradient-to-r from-accent/12 to-accent/[0.03] text-t-primary border border-accent/15 shadow-sm shadow-accent/5'
-                    : 'text-t-secondary hover:bg-bg-hover/60 hover:text-t-primary border border-transparent'
-                }`}
-                onClick={() => {
-                  setActiveChat(chat.id);
-                  if (searchOpen) closeSearch();
-                  if (window.innerWidth < 1024) onToggle();
-                }}
-              >
-                <Home size={14} className={`flex-shrink-0 transition-colors ${activeChatId === chat.id ? 'text-accent/70' : 'text-t-tertiary'}`} />
-
-                {editingId === chat.id ? (
-                  <div className="flex-1 flex items-center gap-1">
-                    <input
-                      ref={inputRef}
-                      value={editValue}
-                      onChange={(e) => setEditValue(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') confirmEdit();
-                        if (e.key === 'Escape') setEditingId(null);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="flex-1 bg-bg-input text-t-primary text-xs rounded-md px-2 py-1 outline-none border border-b-light"
+          <div className="flex-1 overflow-y-auto space-y-0.5 sidebar-scroll">
+            {filteredChats.map(chat => {
+              const isActive = activeChatId === chat.id;
+              return (
+                <div
+                  key={chat.id}
+                  className={`sidebar-item relative group flex items-center gap-2.5 px-3 py-[7px] rounded-xl cursor-pointer transition-all duration-150 ${
+                    isActive
+                      ? 'text-t-primary'
+                      : 'text-t-secondary hover:text-t-primary'
+                  }`}
+                  onClick={() => {
+                    setActiveChat(chat.id);
+                    if (searchOpen) closeSearch();
+                    if (window.innerWidth < 1024) onToggle();
+                  }}
+                >
+                  {/* Active background */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeChat"
+                      className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent/12 to-accent/[0.02]"
+                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
                     />
-                    <button
-                      onClick={(e) => { e.stopPropagation(); confirmEdit(); }}
-                      className="text-accent-green hover:text-accent-green/80"
-                    >
-                      <Check size={13} />
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
-                      className="text-t-tertiary hover:text-t-secondary"
-                    >
-                      <X size={13} />
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <span className="flex-1 text-[13px] truncate">
-                      {truncate(chat.title, 28)}
-                    </span>
-                    <div className="hidden group-hover:flex items-center gap-0.5 flex-shrink-0">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditing(chat.id, chat.title);
+                  )}
+
+                  {/* Active left bar */}
+                  {isActive && (
+                    <motion.div
+                      layoutId="activeBar"
+                      className="absolute left-0 top-[6px] bottom-[6px] w-[2.5px] rounded-full bg-accent/70"
+                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                    />
+                  )}
+
+                  <MessageSquare
+                    size={13}
+                    className={`relative flex-shrink-0 transition-colors ${isActive ? 'text-accent/70' : 'text-t-tertiary/60 group-hover:text-t-tertiary'}`}
+                  />
+
+                  {editingId === chat.id ? (
+                    <div className="relative flex-1 flex items-center gap-1">
+                      <input
+                        ref={inputRef}
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') confirmEdit();
+                          if (e.key === 'Escape') setEditingId(null);
                         }}
-                        className="w-6 h-6 rounded-md flex items-center justify-center text-t-tertiary hover:text-t-primary hover:bg-bg-input transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex-1 bg-bg-input text-t-primary text-xs rounded-md px-2 py-1 outline-none border border-b-light"
+                      />
+                      <button
+                        onClick={(e) => { e.stopPropagation(); confirmEdit(); }}
+                        className="text-accent-green hover:text-accent-green/80"
                       >
-                        <Pencil size={12} />
+                        <Check size={13} />
                       </button>
                       <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteChat(chat.id);
-                        }}
-                        className="w-6 h-6 rounded-md flex items-center justify-center text-t-tertiary hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        onClick={(e) => { e.stopPropagation(); setEditingId(null); }}
+                        className="text-t-tertiary hover:text-t-secondary"
                       >
-                        <Trash2 size={12} />
+                        <X size={13} />
                       </button>
                     </div>
-                  </>
-                )}
-              </div>
-            ))}
+                  ) : (
+                    <>
+                      <span className={`relative flex-1 text-[13px] truncate leading-snug ${isActive ? 'font-[450]' : ''}`}>
+                        {truncate(chat.title, 26)}
+                      </span>
+                      <div className="relative hidden group-hover:flex items-center gap-0.5 flex-shrink-0">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); startEditing(chat.id, chat.title); }}
+                          className="w-5 h-5 rounded-md flex items-center justify-center text-t-tertiary hover:text-t-primary hover:bg-white/5 transition-colors"
+                        >
+                          <Pencil size={11} />
+                        </button>
+                        <button
+                          onClick={(e) => { e.stopPropagation(); deleteChat(chat.id); }}
+                          className="w-5 h-5 rounded-md flex items-center justify-center text-t-tertiary hover:text-red-400 hover:bg-red-500/8 transition-colors"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              );
+            })}
 
             {filteredChats.length === 0 && (
-              <div className="px-3 py-6 text-center">
-                <p className="text-t-tertiary text-xs">
+              <div className="px-3 py-8 text-center">
+                <p className="text-t-tertiary text-[12px]">
                   {searchQuery ? 'No matching chats' : 'No tasks yet'}
                 </p>
               </div>
@@ -257,27 +276,25 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
           </div>
         </div>
 
-        {/* Bottom bar */}
-        <div className="px-3 py-3 border-t border-b flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        {/* Bottom bar — glass card */}
+        <div className="p-3">
+          <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-bg-elevated/50 border border-b/60 backdrop-blur-sm">
             <UserButton
               appearance={{
-                elements: {
-                  avatarBox: 'w-6 h-6',
-                },
+                elements: { avatarBox: 'w-6 h-6' },
               }}
             />
-          </div>
-          <div className="flex items-center gap-1">
-            <button className="w-7 h-7 rounded-md hover:bg-bg-hover flex items-center justify-center text-t-tertiary hover:text-t-secondary transition-colors">
-              <Settings size={15} />
-            </button>
-            <button className="w-7 h-7 rounded-md hover:bg-bg-hover flex items-center justify-center text-t-tertiary hover:text-t-secondary transition-colors">
-              <Grid2X2 size={15} />
-            </button>
-            <button className="w-7 h-7 rounded-md hover:bg-bg-hover flex items-center justify-center text-t-tertiary hover:text-t-secondary transition-colors">
-              <Terminal size={15} />
-            </button>
+            <div className="flex items-center gap-0.5">
+              <button className="w-7 h-7 rounded-lg hover:bg-white/5 flex items-center justify-center text-t-tertiary hover:text-t-secondary transition-colors">
+                <Settings size={14} />
+              </button>
+              <button className="w-7 h-7 rounded-lg hover:bg-white/5 flex items-center justify-center text-t-tertiary hover:text-t-secondary transition-colors">
+                <Grid2X2 size={14} />
+              </button>
+              <button className="w-7 h-7 rounded-lg hover:bg-white/5 flex items-center justify-center text-t-tertiary hover:text-t-secondary transition-colors">
+                <Terminal size={14} />
+              </button>
+            </div>
           </div>
         </div>
       </motion.aside>

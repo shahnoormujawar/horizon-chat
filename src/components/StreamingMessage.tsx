@@ -70,7 +70,7 @@ function ThinkingSection({ content }: { content: string }) {
         className="flex items-center gap-2.5 text-[13px] transition-colors group"
       >
         <div className="thinking-orb-sm" />
-        <span className="font-medium gradient-text-accent">Thinking</span>
+        <span className="font-medium text-accent">Thinking</span>
         {collapsed ? <ChevronDown size={13} className="text-t-tertiary" /> : <ChevronUp size={13} className="text-t-tertiary" />}
       </button>
       <AnimatePresence>

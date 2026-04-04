@@ -304,7 +304,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   };
 
   return (
-    <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-[260px]' : ''}`}>
+    <div className={`flex-1 flex flex-col min-h-0 w-full overflow-hidden transition-all duration-300 ${sidebarOpen ? 'lg:ml-[260px]' : ''}`}>
       {/* Top bar */}
       <header className="flex items-center justify-between px-3 sm:px-5 h-[48px] sm:h-[52px] flex-shrink-0 z-10 border-b border-b/40 glass-surface">
         <div className="flex items-center gap-1.5 sm:gap-2">

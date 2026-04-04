@@ -374,13 +374,13 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overscroll-none"
+        className="flex-1 overflow-y-auto overflow-x-hidden overscroll-none"
         style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
         {messages.length === 0 ? (
           <EmptyState onSuggestion={handleSend} />
         ) : (
-          <div className="max-w-[740px] mx-auto px-3 sm:px-5 pb-4">
+          <div className="max-w-[740px] mx-auto px-3 sm:px-5 pb-4 w-full min-w-0">
             {messages.map((msg, i) => {
               const isLast = i === messages.length - 1;
               const isStreamingMsg = isLast && isStreaming && msg.role === 'assistant';

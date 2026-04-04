@@ -144,7 +144,7 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="flex justify-end py-3"
       >
-        <div className="bg-gradient-to-br from-accent/15 via-accent/10 to-accent/5 px-3.5 sm:px-4 py-2.5 rounded-2xl rounded-br-sm max-w-[90%] sm:max-w-[80%] text-t-primary text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap border border-accent/20 shadow-sm shadow-accent/5">
+        <div className="bg-gradient-to-br from-accent/15 via-accent/10 to-accent/5 px-3.5 sm:px-4 py-2.5 rounded-2xl rounded-br-sm max-w-[90%] sm:max-w-[80%] text-t-primary text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden border border-accent/20 shadow-sm shadow-accent/5">
           {message.content}
         </div>
       </motion.div>
@@ -163,8 +163,9 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
         initial={isLatest ? { opacity: 0, y: 10 } : false}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="py-4 pl-3 -ml-3 border-l-2 border-accent/[0.10] hover:border-accent/20 transition-colors"
+        className="py-4 pl-3 relative"
       >
+        <div className="absolute left-0 top-4 bottom-4 w-[2px] rounded-full bg-accent/10" />
         <AIHeader />
         {thinkingContent && <ThinkingSection content={thinkingContent} />}
         <AgentSteps taskGroups={taskGroups} />
@@ -192,8 +193,9 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
       initial={isLatest ? { opacity: 0, y: 10 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="py-4 pl-3 -ml-3 border-l-2 border-accent/[0.10] hover:border-accent/20 transition-colors"
+      className="py-4 pl-3 relative"
     >
+      <div className="absolute left-0 top-4 bottom-4 w-[2px] rounded-full bg-accent/10 transition-colors group-hover:bg-accent/20" />
       <AIHeader />
       {hasSteps ? (
         <div>

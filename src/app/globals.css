@@ -165,7 +165,8 @@ body {
 }
 
 /* ── Markdown prose ── */
-.prose { color: #d1d1cf; line-height: 1.8; font-size: 0.875rem; overflow-wrap: break-word; word-break: break-word; }
+.prose { color: #d1d1cf; line-height: 1.8; font-size: 0.875rem; overflow-wrap: break-word; word-break: break-word; max-width: 100%; }
+.prose img, .prose video, .prose iframe, .prose table { max-width: 100%; }
 @media (min-width: 640px) { .prose { font-size: 0.9375rem; } }
 .prose h1, .prose h2, .prose h3, .prose h4 { color: #e8e8e6; font-weight: 600; margin-top: 1.5em; margin-bottom: 0.5em; }
 .prose h1 { font-size: 1.5rem; }

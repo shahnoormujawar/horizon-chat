@@ -180,7 +180,9 @@ export function StreamingMessage({
   const uniqueSources = sources.filter((s, i, arr) => arr.findIndex(x => x.url === s.url) === i);
 
   return (
-    <div className="py-4 pl-3 -ml-3 border-l-2 border-accent/[0.10]">
+    <div className="py-4 pl-3 relative">
+      {/* Left accent line — avoids negative margin overflow on mobile */}
+      <div className="absolute left-0 top-4 bottom-4 w-[2px] rounded-full bg-accent/10" />
       {/* AI header */}
       <div className="flex items-center gap-2.5 mb-3">
         <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent/25 via-accent/12 to-transparent flex items-center justify-center border border-accent/25 shadow-sm shadow-accent/10 flex-shrink-0">

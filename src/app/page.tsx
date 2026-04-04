@@ -65,7 +65,7 @@ export default function Home() {
   }
 
   return (
-    <div className="h-[100dvh] flex bg-bg-primary">
+    <div className="fixed inset-0 flex bg-bg-primary">
       <Sidebar isOpen={sidebarOpen} onToggle={() => setSidebarOpen(!sidebarOpen)} />
       <ChatArea sidebarOpen={sidebarOpen} onToggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
     </div>

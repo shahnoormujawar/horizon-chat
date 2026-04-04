@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useChatStore } from '@/store/chat-store';
 import { streamChat } from '@/lib/streaming';
 import { generateId } from '@/lib/utils';
@@ -10,7 +10,7 @@ import { StreamingMessage } from './StreamingMessage';
 import { MessageInput } from './MessageInput';
 import { useVoicePlayback } from '@/hooks/useVoicePlayback';
 import { Menu, RotateCcw, Bell, ChevronDown, Share2, MoreHorizontal, ChevronUp, Volume2, VolumeX } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { UserButton } from '@clerk/nextjs';
 
 interface ChatAreaProps {
@@ -304,7 +304,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   };
 
   return (
-    <div className={`flex-1 flex flex-col h-[100dvh] transition-all duration-300 ${sidebarOpen ? 'lg:ml-[260px]' : ''}`}>
+    <div className={`flex-1 flex flex-col min-h-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-[260px]' : ''}`}>
       {/* Top bar */}
       <header className="flex items-center justify-between px-3 sm:px-5 h-[48px] sm:h-[52px] flex-shrink-0 z-10 border-b border-b/40 glass-surface">
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -374,7 +374,8 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto"
+        className="flex-1 overflow-y-auto overscroll-none"
+        style={{ WebkitOverflowScrolling: 'touch' } as React.CSSProperties}
       >
         {messages.length === 0 ? (
           <EmptyState onSuggestion={handleSend} />
@@ -419,37 +420,36 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
       {/* Bottom area with status bar + input */}
       {messages.length > 0 && (
         <div className="flex-shrink-0">
-          {/* Status bar during streaming */}
-          <AnimatePresence>
-            {isStreaming && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 10 }}
-                className="max-w-[740px] mx-auto px-3 sm:px-5 mb-2"
-              >
-                <div className="flex items-center justify-between glass-elevated border border-b/60 rounded-2xl px-4 py-3 shadow-md shadow-accent/5">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="thinking-orb-sm flex-shrink-0" />
-                    <span className="text-[13px] text-t-secondary truncate">
-                      Horizon is <span className="gradient-text-accent font-medium">{statusDetailRef.current || STATUS_LABELS[agentStatus] || 'thinking'}</span>...
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0 ml-3">
-                    {phaseRef.current > 0 && (
-                      <span className="text-[11px] text-accent font-medium px-1.5 py-0.5 rounded-md bg-accent/10 border border-accent/15">
-                        Phase {phaseRef.current}
-                      </span>
-                    )}
-                    <span className="text-[12px] text-t-tertiary font-mono">{formatTime(streamTimer)}</span>
-                    <button className="text-t-tertiary hover:text-t-secondary">
-                      <ChevronUp size={14} />
-                    </button>
-                  </div>
+          {/* Status bar during streaming — CSS height transition prevents layout shift on mobile */}
+          <div
+            className="overflow-hidden transition-all duration-200 ease-out"
+            style={{
+              maxHeight: isStreaming ? '64px' : '0px',
+              opacity: isStreaming ? 1 : 0,
+            }}
+          >
+            <div className="max-w-[740px] mx-auto px-3 sm:px-5 pb-2">
+              <div className="flex items-center justify-between glass-elevated border border-b/60 rounded-2xl px-4 py-3 shadow-md shadow-accent/5">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="thinking-orb-sm flex-shrink-0" />
+                  <span className="text-[13px] text-t-secondary truncate">
+                    Horizon is <span className="gradient-text-accent font-medium">{statusDetailRef.current || STATUS_LABELS[agentStatus] || 'thinking'}</span>...
+                  </span>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <div className="flex items-center gap-3 flex-shrink-0 ml-3">
+                  {phaseRef.current > 0 && (
+                    <span className="text-[11px] text-accent font-medium px-1.5 py-0.5 rounded-md bg-accent/10 border border-accent/15">
+                      Phase {phaseRef.current}
+                    </span>
+                  )}
+                  <span className="text-[12px] text-t-tertiary font-mono">{formatTime(streamTimer)}</span>
+                  <button className="text-t-tertiary hover:text-t-secondary">
+                    <ChevronUp size={14} />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
 
           <div className="px-3 sm:px-5 pb-3 sm:pb-4">
             <div className="max-w-[740px] mx-auto">

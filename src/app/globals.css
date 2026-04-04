@@ -5,7 +5,11 @@
 @tailwind utilities;
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-html { color-scheme: dark; }
+html {
+  color-scheme: dark;
+  /* Prevent layout shift when virtual keyboard appears on mobile */
+  height: 100%;
+}
 body {
   background:
     radial-gradient(circle at center, rgba(255,255,255,0.018) 1px, transparent 1px) 0 0 / 28px 28px,
@@ -17,8 +21,14 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
-  height: 100vh;
-  height: 100dvh;
+  height: 100%;
+  /* Prevent overscroll bounce from pushing the layout */
+  overscroll-behavior: none;
+  /* Smooth touch scrolling for mobile */
+  -webkit-overflow-scrolling: touch;
+  /* Stable rendering on mobile */
+  position: fixed;
+  width: 100%;
 }
 
 /* Scrollbar */

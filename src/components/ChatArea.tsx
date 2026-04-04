@@ -543,22 +543,6 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
         transition={{ duration: 0.55, ease: 'easeOut' }}
         className="w-full max-w-[660px] text-center relative"
       >
-        {/* Logo mark */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.85 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
-          className="flex justify-center mb-6 sm:mb-8"
-        >
-          <div className="w-[56px] h-[56px] rounded-2xl bg-bg-elevated flex items-center justify-center border border-b">
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-        </motion.div>
-
         {/* Heading */}
         <motion.h1
           initial={{ opacity: 0, y: 12 }}

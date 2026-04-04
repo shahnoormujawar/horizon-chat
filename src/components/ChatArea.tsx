@@ -521,78 +521,73 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   );
 }
 
-const SUGGESTIONS = [
-  { icon: '🔍', label: 'Research a topic', desc: 'Deep dive into any subject' },
-  { icon: '🌐', label: 'Build a website', desc: 'Design and code from scratch' },
-  { icon: '📊', label: 'Analyze data', desc: 'Charts, trends, comparisons' },
-  { icon: '✨', label: 'Explain a concept', desc: 'Clear, concise breakdowns' },
+const PROMPTS = [
+  'Summarise the latest AI news',
+  'Write a cover letter',
+  'Explain quantum computing',
+  'Plan a trip to Tokyo',
+  'Debug my Python code',
+  'Compare React vs Vue',
 ];
 
 function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center h-full px-3 sm:px-5 relative overflow-hidden">
-      {/* Background glow orbs */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-[20%] left-[30%] w-[420px] h-[420px] rounded-full bg-accent/[0.06] blur-[100px]" />
-        <div className="absolute bottom-[20%] right-[25%] w-[320px] h-[320px] rounded-full bg-accent-purple/[0.05] blur-[90px]" />
-      </div>
-
+    <div className="flex-1 flex flex-col items-center justify-center h-full px-4 sm:px-5 relative overflow-hidden">
       <motion.div
-        initial={{ opacity: 0, y: 24 }}
+        initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.55, ease: 'easeOut' }}
-        className="w-full max-w-[660px] text-center relative"
+        transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-[620px] text-center"
       >
         {/* Heading */}
         <motion.h1
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
-          className="text-[1.75rem] sm:text-[2.4rem] font-semibold leading-tight mb-2 text-t-primary tracking-tight"
+          transition={{ duration: 0.45, ease: 'easeOut', delay: 0.05 }}
+          className="text-[1.6rem] sm:text-[2.2rem] font-semibold leading-tight mb-2.5 text-t-primary tracking-tight"
         >
           What can I help you with?
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.18 }}
-          className="text-t-tertiary text-[13px] sm:text-[14px] mb-7 sm:mb-9"
+          transition={{ duration: 0.4, delay: 0.12 }}
+          className="text-t-tertiary text-[13px] sm:text-[14px] mb-8 sm:mb-10"
         >
-          Ask anything, research deeply, build faster with Horizon.
+          Ask anything, research deeply, build faster.
         </motion.p>
 
-        {/* Input */}
+        {/* Input — aurora always on for mobile */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.2 }}
+          transition={{ duration: 0.4, delay: 0.18 }}
         >
           <MessageInput
             onSend={onSuggestion}
             onStop={() => {}}
             isStreaming={false}
+            wrapperClassName="input-border-always"
           />
         </motion.div>
 
-        {/* Suggestion cards */}
+        {/* Prompt pills */}
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, delay: 0.3 }}
-          className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mt-4 sm:mt-5"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.4, delay: 0.28 }}
+          className="flex flex-wrap justify-center gap-2 mt-5 sm:mt-6"
         >
-          {SUGGESTIONS.map((chip, i) => (
+          {PROMPTS.map((prompt, i) => (
             <motion.button
-              key={chip.label}
-              initial={{ opacity: 0, y: 6 }}
+              key={prompt}
+              initial={{ opacity: 0, y: 4 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.32 + i * 0.06 }}
-              onClick={() => onSuggestion(chip.label)}
-              className="group flex flex-col gap-1 p-3 sm:p-3.5 rounded-xl border border-b bg-bg-elevated/40 hover:bg-bg-elevated hover:border-accent/20 hover:shadow-sm hover:shadow-accent/5 transition-all text-left cursor-pointer"
+              transition={{ duration: 0.3, delay: 0.3 + i * 0.04 }}
+              onClick={() => onSuggestion(prompt)}
+              className="px-3.5 py-1.5 rounded-full text-[12px] sm:text-[13px] text-t-tertiary hover:text-t-secondary border border-b/70 hover:border-b-light bg-transparent hover:bg-bg-elevated/50 transition-all"
             >
-              <span className="text-xl leading-none">{chip.icon}</span>
-              <span className="text-[12px] sm:text-[13px] font-medium text-t-secondary group-hover:text-t-primary transition-colors mt-1">{chip.label}</span>
-              <span className="text-[11px] text-t-tertiary hidden sm:block leading-relaxed">{chip.desc}</span>
+              {prompt}
             </motion.button>
           ))}
         </motion.div>

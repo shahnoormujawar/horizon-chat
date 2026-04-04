@@ -201,6 +201,14 @@ body {
   animation: inputBorderSpin 6s linear infinite;
 }
 
+/* Empty state: aurora always on for mobile */
+@media (max-width: 639px) {
+  .input-border-always::before {
+    opacity: 0.85;
+    animation: inputBorderSpin 6s linear infinite;
+  }
+}
+
 /* ── Sidebar ── */
 
 /* New task button — soft accent pill */

@@ -11,6 +11,7 @@ interface MessageInputProps {
   isStreaming: boolean;
   disabled?: boolean;
   placeholder?: string;
+  wrapperClassName?: string;
 }
 
 function formatTimer(s: number) {
@@ -52,7 +53,7 @@ function WaveformBars({ levels }: { levels: number[] }) {
   );
 }
 
-export function MessageInput({ onSend, onStop, isStreaming, disabled, placeholder }: MessageInputProps) {
+export function MessageInput({ onSend, onStop, isStreaming, disabled, placeholder, wrapperClassName }: MessageInputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -119,7 +120,7 @@ export function MessageInput({ onSend, onStop, isStreaming, disabled, placeholde
   const canSend = value.trim().length > 0 && !isStreaming && !disabled;
 
   return (
-    <div className="input-border-wrap rounded-xl sm:rounded-2xl">
+    <div className={`input-border-wrap rounded-xl sm:rounded-2xl ${wrapperClassName ?? ''}`}>
     <div className="relative bg-bg-input rounded-[10px] sm:rounded-[14px] overflow-hidden">
       <AnimatePresence mode="wait">
         {isRecording ? (

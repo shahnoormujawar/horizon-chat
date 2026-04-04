@@ -170,7 +170,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         {/* Chat list */}
         <div className="px-2.5 flex-1 overflow-hidden flex flex-col min-h-0">
           <div className="flex items-center px-3 mb-2">
-            <span className="text-[10.5px] font-semibold text-t-tertiary uppercase tracking-widest">
+            <span className="text-[11px] font-semibold text-t-tertiary uppercase tracking-widest">
               {searchQuery ? 'Results' : 'History'}
             </span>
           </div>
@@ -197,7 +197,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                     <motion.div
                       layoutId="activeChat"
                       className="absolute inset-0 rounded-xl bg-gradient-to-r from-accent/12 to-accent/[0.02]"
-                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     />
                   )}
 
@@ -206,7 +206,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                     <motion.div
                       layoutId="activeBar"
                       className="absolute left-0 top-[6px] bottom-[6px] w-[2.5px] rounded-full bg-accent/70"
-                      transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                      transition={{ type: 'spring', stiffness: 300, damping: 30 }}
                     />
                   )}
 
@@ -277,7 +277,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         </div>
 
         {/* Bottom bar — glass card */}
-        <div className="p-3">
+        <div className="p-3 pb-[max(12px,env(safe-area-inset-bottom))]">
           <div className="flex items-center justify-between px-3 py-2.5 rounded-xl bg-bg-elevated/50 border border-b/60 backdrop-blur-sm">
             <UserButton
               appearance={{

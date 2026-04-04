@@ -49,7 +49,7 @@ function StatusIcon({ status }: { status: StepStatus }) {
 
 function SourceCard({ source }: { source: AgentSource }) {
   const content = (
-    <div className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-bg-input border border-b hover:border-b-light transition-colors group">
+    <div className="flex items-start gap-3 px-3 py-2.5 rounded-xl bg-bg-input border border-b hover:border-b-light transition-colors group">
       <div className="w-8 h-8 rounded-md bg-bg-elevated flex items-center justify-center flex-shrink-0 mt-0.5">
         {source.url ? (
           <Globe size={14} className="text-accent-blue" />

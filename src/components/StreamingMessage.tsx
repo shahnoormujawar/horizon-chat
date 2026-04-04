@@ -259,7 +259,7 @@ function ThinkingIndicator() {
 
 function ThinkingDots() {
   return (
-    <span className="inline-flex items-center gap-[3px] ml-1.5 -mb-[2px]">
+    <span className="inline-flex items-center gap-1 ml-1.5 align-middle">
       <span className="w-[3px] h-[3px] rounded-full bg-accent animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.8s' }} />
       <span className="w-[3px] h-[3px] rounded-full bg-accent animate-bounce" style={{ animationDelay: '0.15s', animationDuration: '0.8s' }} />
       <span className="w-[3px] h-[3px] rounded-full bg-accent animate-bounce" style={{ animationDelay: '0.3s', animationDuration: '0.8s' }} />

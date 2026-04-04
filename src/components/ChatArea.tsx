@@ -456,7 +456,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
               const container = scrollContainerRef.current;
               if (container) container.scrollTo({ top: container.scrollHeight, behavior: 'smooth' });
             }}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3.5 py-2 rounded-full glass-elevated border border-b/60 shadow-lg shadow-black/30 text-t-secondary hover:text-t-primary hover:border-accent/30 transition-colors z-10"
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3.5 py-2 rounded-full glass-elevated border border-b/60 shadow-lg shadow-black/30 text-t-secondary hover:text-t-primary hover:border-accent/30 transition-colors z-[5]"
           >
             {hasUnread && (
               <span className="w-2 h-2 rounded-full bg-accent flex-shrink-0" />

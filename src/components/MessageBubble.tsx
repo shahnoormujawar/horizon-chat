@@ -147,7 +147,7 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, in
         initial={{ opacity: 0, x: 55, scale: 0.97 }}
         animate={{ opacity: 1, x: 0, scale: 1 }}
         transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1], delay: staggerDelay }}
-        className="flex justify-end py-3"
+        className="flex justify-end py-4"
       >
         <div className="user-bubble px-3.5 sm:px-4 py-2.5 rounded-2xl rounded-br-sm max-w-[90%] sm:max-w-[80%] text-t-primary text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap break-words overflow-hidden">
           {message.content}
@@ -167,7 +167,7 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, in
       <motion.div
         initial={{ opacity: 0, y: 22, filter: 'blur(6px)' }}
         animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-        transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1], delay: staggerDelay }}
+        transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: staggerDelay }}
         className="py-4 pl-3 relative"
       >
         <div className="absolute left-0 top-4 bottom-4 w-[2px] rounded-full bg-accent/10" />
@@ -197,7 +197,7 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, in
     <motion.div
       initial={{ opacity: 0, y: 14, filter: 'blur(4px)' }}
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1], delay: staggerDelay }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1], delay: staggerDelay }}
       className="py-4 pl-3 relative"
     >
       <div className="absolute left-0 top-4 bottom-4 w-[2px] rounded-full bg-accent/10 transition-colors group-hover:bg-accent/20" />

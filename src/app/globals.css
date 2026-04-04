@@ -294,3 +294,13 @@ body {
 .status-pulse { animation: statusPulse 2s ease-in-out infinite; }
 textarea { font-family: inherit; }
 ::selection { background: rgba(59,130,246,0.25); color: #e8e8e6; }
+
+/* ── Accessibility: reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  body::before { transition: none !important; }
+}

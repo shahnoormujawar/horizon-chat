@@ -99,7 +99,8 @@ export function MessageInput({ onSend, onStop, isStreaming, disabled, placeholde
     const textarea = textareaRef.current;
     if (!textarea) return;
     textarea.style.height = 'auto';
-    textarea.style.height = Math.min(textarea.scrollHeight, 180) + 'px';
+    const maxH = window.innerWidth < 640 ? 120 : 180;
+    textarea.style.height = Math.min(textarea.scrollHeight, maxH) + 'px';
   }, []);
 
   useEffect(() => {

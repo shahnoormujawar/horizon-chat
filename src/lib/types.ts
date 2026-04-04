@@ -65,14 +65,14 @@ export interface Chat {
 }
 
 export const STATUS_LABELS: Record<AgentStatus, string> = {
-  idle: 'Waiting for input',
-  understanding: 'Understanding request...',
-  planning: 'Planning research...',
-  thinking: 'Thinking...',
-  searching: 'Searching the web...',
-  reading: 'Reading webpage...',
-  analyzing: 'Analyzing results...',
-  generating: 'Writing response...',
-  completed: 'Research complete',
+  idle: 'Ready',
+  understanding: 'Reading your query...',
+  planning: 'Building analysis plan...',
+  thinking: 'Analysing...',
+  searching: 'Scanning market data...',
+  reading: 'Reading source...',
+  analyzing: 'Crunching the numbers...',
+  generating: 'Composing insight...',
+  completed: 'Analysis complete',
   error: 'Something went wrong',
 };

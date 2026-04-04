@@ -137,7 +137,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
     const container = scrollContainerRef.current;
     if (!container) return;
     const { scrollTop, scrollHeight, clientHeight } = container;
-    const isAtBottom = scrollHeight - scrollTop - clientHeight < 150;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 320;
     userScrolledRef.current = !isAtBottom;
     setUserScrolled(!isAtBottom);
     if (isAtBottom) setHasUnread(false);
@@ -336,7 +336,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
             </button>
           )}
           <button className="flex items-center gap-1.5 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-bg-hover text-t-secondary hover:text-t-primary transition-colors text-[13px] font-medium">
-            <span>Horizon Agent</span>
+            <span>Horizon Markets</span>
             <ChevronDown size={14} className="text-t-tertiary" />
           </button>
         </div>
@@ -511,7 +511,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                 onSend={handleSend}
                 onStop={handleStop}
                 isStreaming={isStreaming}
-                placeholder="Send message to Horizon"
+                placeholder="Ask about a stock, market, or trade..."
               />
             </div>
           </div>
@@ -522,15 +522,23 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
 }
 
 const PROMPTS = [
-  'Summarise the latest AI news',
-  'Write a cover letter',
-  'Explain quantum computing',
-  'Plan a trip to Tokyo',
-  'Debug my Python code',
-  'Compare React vs Vue',
+  'Analyse AAPL earnings',
+  'What\'s driving the S&P 500?',
+  'Compare NVDA vs AMD',
+  'Explain options IV crush',
+  'Best sectors for this quarter?',
+  'Build a DCF model for Tesla',
 ];
 
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
+
 function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) {
+  const greeting = getGreeting();
   return (
     <div className="flex-1 flex flex-col items-center justify-center h-full px-4 sm:px-5 relative overflow-hidden">
       <motion.div
@@ -539,23 +547,23 @@ function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) 
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
         className="w-full max-w-[620px] text-center"
       >
-        {/* Heading */}
+        {/* Greeting + Heading */}
+        <motion.p
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: 'easeOut', delay: 0.02 }}
+          className="text-[13px] sm:text-[14px] text-t-tertiary mb-2 tracking-wide"
+        >
+          {greeting}
+        </motion.p>
         <motion.h1
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.45, ease: 'easeOut', delay: 0.05 }}
-          className="text-[1.6rem] sm:text-[2.2rem] font-semibold leading-tight mb-2.5 text-t-primary tracking-tight"
+          transition={{ duration: 0.45, ease: 'easeOut', delay: 0.08 }}
+          className="text-[1.6rem] sm:text-[2.2rem] font-semibold leading-tight mb-8 sm:mb-10 text-t-primary tracking-tight"
         >
-          What can I help you with?
+          What would you like to analyse?
         </motion.h1>
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.4, delay: 0.12 }}
-          className="text-t-tertiary text-[13px] sm:text-[14px] mb-8 sm:mb-10"
-        >
-          Ask anything, research deeply, build faster.
-        </motion.p>
 
         {/* Input — aurora always on for mobile */}
         <motion.div

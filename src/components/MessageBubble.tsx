@@ -113,7 +113,7 @@ function AIHeader() {
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
       </div>
       <span className="text-[14px] font-semibold text-t-primary">horizon</span>
-      <span className="text-[11px] font-medium bg-accent/10 text-accent px-1.5 py-0.5 rounded-md border border-accent/15">Agent</span>
+      <span className="text-[11px] font-medium bg-accent/10 text-accent px-1.5 py-0.5 rounded-md border border-accent/15">Markets</span>
     </div>
   );
 }

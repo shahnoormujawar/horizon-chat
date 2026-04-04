@@ -53,9 +53,32 @@ function WaveformBars({ levels }: { levels: number[] }) {
   );
 }
 
+const CYCLING_PLACEHOLDERS = [
+  'Ask about a stock or ticker...',
+  'Analyse market trends...',
+  'Compare companies or sectors...',
+  'What\'s your trade thesis?',
+];
+
 export function MessageInput({ onSend, onStop, isStreaming, disabled, placeholder, wrapperClassName }: MessageInputProps) {
   const [value, setValue] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Cycling placeholder — only when no static placeholder is passed
+  const [placeholderIndex, setPlaceholderIndex] = useState(0);
+  const [placeholderVisible, setPlaceholderVisible] = useState(true);
+  useEffect(() => {
+    if (placeholder) return; // use static placeholder if provided
+    const cycle = setInterval(() => {
+      setPlaceholderVisible(false);
+      setTimeout(() => {
+        setPlaceholderIndex(i => (i + 1) % CYCLING_PLACEHOLDERS.length);
+        setPlaceholderVisible(true);
+      }, 400);
+    }, 3000);
+    return () => clearInterval(cycle);
+  }, [placeholder]);
+  const activePlaceholder = placeholder ?? CYCLING_PLACEHOLDERS[placeholderIndex];
 
   const {
     isRecording,
@@ -192,10 +215,10 @@ export function MessageInput({ onSend, onStop, isStreaming, disabled, placeholde
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={placeholder || "Assign a task or ask anything"}
+                placeholder={activePlaceholder}
                 rows={1}
                 disabled={disabled}
-                className="w-full bg-transparent text-t-primary text-[13px] sm:text-[15px] placeholder:text-t-placeholder resize-none outline-none min-h-[24px] sm:min-h-[28px] max-h-[120px] sm:max-h-[180px] leading-relaxed"
+                className={`w-full bg-transparent text-t-primary text-[13px] sm:text-[15px] resize-none outline-none min-h-[24px] sm:min-h-[28px] max-h-[120px] sm:max-h-[180px] leading-relaxed transition-all duration-300 ${placeholderVisible ? 'placeholder:opacity-100' : 'placeholder:opacity-0'} placeholder:text-t-placeholder placeholder:transition-opacity placeholder:duration-300`}
               />
             </div>
 

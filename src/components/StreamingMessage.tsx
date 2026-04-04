@@ -189,7 +189,7 @@ export function StreamingMessage({
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         </div>
         <span className="text-[14px] font-semibold text-t-primary">horizon</span>
-        <span className="text-[11px] font-medium bg-accent/10 text-accent px-1.5 py-0.5 rounded-md border border-accent/15">Agent</span>
+        <span className="text-[11px] font-medium bg-accent/10 text-accent px-1.5 py-0.5 rounded-md border border-accent/15">Markets</span>
       </div>
 
       {/* Thinking section */}
@@ -204,7 +204,7 @@ export function StreamingMessage({
       {!hasContent && hasTaskGroups && isStreaming && (
         <div className="flex items-center gap-3 py-3 mt-1">
           <div className="thinking-orb" />
-          <span className="text-[13px] text-t-secondary">Synthesizing findings...</span>
+          <span className="text-[13px] text-t-secondary">Composing analysis...</span>
         </div>
       )}
 
@@ -251,7 +251,7 @@ function ThinkingIndicator() {
       <div className="thinking-orb" />
       <div className="flex flex-col gap-0.5">
         <span className="text-[13px] font-medium text-t-primary">Thinking<ThinkingDots /></span>
-        <span className="text-[11px] text-t-tertiary">Planning research approach</span>
+        <span className="text-[11px] text-t-tertiary">Scanning market data</span>
       </div>
     </motion.div>
   );

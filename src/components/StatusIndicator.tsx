@@ -19,9 +19,9 @@ const STATUS_ICONS: Record<AgentStatus, React.ReactNode> = {
 
 const STATUS_COLORS: Record<AgentStatus, string> = {
   idle: '',
-  understanding: 'text-amber-400/80',
+  understanding: 'text-blue-400/80',
   planning: 'text-indigo-400/80',
-  thinking: 'text-amber-400/80',
+  thinking: 'text-blue-400/80',
   searching: 'text-accent-blue',
   reading: 'text-emerald-400/80',
   analyzing: 'text-purple-400/80',

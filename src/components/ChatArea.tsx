@@ -306,7 +306,7 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   return (
     <div className={`flex-1 flex flex-col h-[100dvh] transition-all duration-300 ${sidebarOpen ? 'lg:ml-[260px]' : ''}`}>
       {/* Top bar */}
-      <header className="flex items-center justify-between px-3 sm:px-5 h-[48px] sm:h-[52px] flex-shrink-0 z-10">
+      <header className="flex items-center justify-between px-3 sm:px-5 h-[48px] sm:h-[52px] flex-shrink-0 z-10 border-b border-b/40 glass-surface">
         <div className="flex items-center gap-1.5 sm:gap-2">
           {!sidebarOpen && (
             <button
@@ -428,16 +428,16 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
                 exit={{ opacity: 0, y: 10 }}
                 className="max-w-[740px] mx-auto px-3 sm:px-5 mb-2"
               >
-                <div className="flex items-center justify-between bg-bg-elevated border border-b rounded-xl px-4 py-2.5">
+                <div className="flex items-center justify-between glass-elevated border border-b/60 rounded-2xl px-4 py-3 shadow-md shadow-accent/5">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse flex-shrink-0" />
+                    <div className="thinking-orb-sm flex-shrink-0" />
                     <span className="text-[13px] text-t-secondary truncate">
-                      {statusDetailRef.current || STATUS_LABELS[agentStatus] || 'Processing...'}
+                      Horizon is <span className="gradient-text-accent font-medium">{statusDetailRef.current || STATUS_LABELS[agentStatus] || 'thinking'}</span>...
                     </span>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0 ml-3">
                     {phaseRef.current > 0 && (
-                      <span className="text-[11px] text-accent-blue font-medium px-1.5 py-0.5 rounded bg-accent-blue/10">
+                      <span className="text-[11px] text-accent font-medium px-1.5 py-0.5 rounded-md bg-accent/10 border border-accent/15">
                         Phase {phaseRef.current}
                       </span>
                     )}
@@ -467,43 +467,97 @@ export function ChatArea({ sidebarOpen, onToggleSidebar }: ChatAreaProps) {
   );
 }
 
+const SUGGESTIONS = [
+  { icon: '🔍', label: 'Research a topic', desc: 'Deep dive into any subject' },
+  { icon: '🌐', label: 'Build a website', desc: 'Design and code from scratch' },
+  { icon: '📊', label: 'Analyze data', desc: 'Charts, trends, comparisons' },
+  { icon: '✨', label: 'Explain a concept', desc: 'Clear, concise breakdowns' },
+];
+
 function EmptyState({ onSuggestion }: { onSuggestion: (text: string) => void }) {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center h-full px-3 sm:px-5">
+    <div className="flex-1 flex flex-col items-center justify-center h-full px-3 sm:px-5 relative overflow-hidden">
+      {/* Background glow orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className="absolute top-[20%] left-[30%] w-[420px] h-[420px] rounded-full bg-accent/[0.06] blur-[100px]" />
+        <div className="absolute bottom-[20%] right-[25%] w-[320px] h-[320px] rounded-full bg-accent-purple/[0.05] blur-[90px]" />
+      </div>
+
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: 'easeOut' }}
-        className="w-full max-w-[680px] text-center"
+        transition={{ duration: 0.55, ease: 'easeOut' }}
+        className="w-full max-w-[660px] text-center relative"
       >
-        <h1 className="font-heading text-[1.75rem] sm:text-[2.5rem] font-normal text-t-heading mb-6 sm:mb-10 leading-tight">
-          What can I do for you?
-        </h1>
+        {/* Logo mark */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.05 }}
+          className="flex justify-center mb-6 sm:mb-8"
+        >
+          <div className="w-[56px] h-[56px] rounded-2xl bg-gradient-to-br from-blue-500/25 via-blue-600/15 to-purple-500/10 flex items-center justify-center border border-accent/30 shadow-lg shadow-accent/15 glow-accent-sm">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+        </motion.div>
 
-        <MessageInput
-          onSend={onSuggestion}
-          onStop={() => {}}
-          isStreaming={false}
-        />
+        {/* Heading */}
+        <motion.h1
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, ease: 'easeOut', delay: 0.1 }}
+          className="text-[1.75rem] sm:text-[2.4rem] font-semibold leading-tight mb-2 gradient-text-warm tracking-tight"
+        >
+          What can I help you with?
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.18 }}
+          className="text-t-tertiary text-[13px] sm:text-[14px] mb-7 sm:mb-9"
+        >
+          Ask anything, research deeply, build faster with Horizon.
+        </motion.p>
 
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-2.5 mt-4 sm:mt-6">
-          {[
-            { icon: '🔍', label: 'Research a topic' },
-            { icon: '🌐', label: 'Build website' },
-            { icon: '📊', label: 'Compare technologies' },
-            { icon: '✨', label: 'Explain a concept' },
-            { icon: '...', label: 'More' },
-          ].map((chip) => (
-            <button
+        {/* Input */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.2 }}
+        >
+          <MessageInput
+            onSend={onSuggestion}
+            onStop={() => {}}
+            isStreaming={false}
+          />
+        </motion.div>
+
+        {/* Suggestion cards */}
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.3 }}
+          className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 mt-4 sm:mt-5"
+        >
+          {SUGGESTIONS.map((chip, i) => (
+            <motion.button
               key={chip.label}
-              onClick={() => chip.label !== 'More' ? onSuggestion(chip.label) : undefined}
-              className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-b bg-transparent text-t-secondary hover:text-t-primary hover:border-b-light hover:bg-bg-hover/50 transition-all text-[12px] sm:text-[13px]"
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.32 + i * 0.06 }}
+              onClick={() => onSuggestion(chip.label)}
+              className="group flex flex-col gap-1 p-3 sm:p-3.5 rounded-xl border border-b bg-bg-elevated/40 hover:bg-bg-elevated hover:border-accent/20 hover:shadow-sm hover:shadow-accent/5 transition-all text-left cursor-pointer"
             >
-              <span className="text-[12px] sm:text-[13px]">{chip.icon}</span>
-              <span>{chip.label}</span>
-            </button>
+              <span className="text-xl leading-none">{chip.icon}</span>
+              <span className="text-[12px] sm:text-[13px] font-medium text-t-secondary group-hover:text-t-primary transition-colors mt-1">{chip.label}</span>
+              <span className="text-[11px] text-t-tertiary hidden sm:block leading-relaxed">{chip.desc}</span>
+            </motion.button>
           ))}
-        </div>
+        </motion.div>
       </motion.div>
     </div>
   );

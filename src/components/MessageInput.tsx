@@ -119,7 +119,7 @@ export function MessageInput({ onSend, onStop, isStreaming, disabled, placeholde
   const canSend = value.trim().length > 0 && !isStreaming && !disabled;
 
   return (
-    <div className="bg-bg-input border border-b rounded-xl sm:rounded-2xl overflow-hidden transition-colors focus-within:border-b-light">
+    <div className="bg-bg-input border border-b rounded-xl sm:rounded-2xl overflow-hidden transition-all duration-300 input-glow">
       <AnimatePresence mode="wait">
         {isRecording ? (
           <motion.div
@@ -239,14 +239,14 @@ export function MessageInput({ onSend, onStop, isStreaming, disabled, placeholde
                   <button
                     onClick={handleSend}
                     disabled={!canSend}
-                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all ml-0.5 sm:ml-1 ${
+                    className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 ml-0.5 sm:ml-1 ${
                       canSend
-                        ? 'bg-t-primary text-bg-primary hover:opacity-90'
+                        ? 'bg-gradient-to-br from-blue-400 via-blue-500 to-blue-600 text-white glow-accent-sm hover:scale-105 active:scale-95'
                         : 'bg-send text-t-tertiary cursor-default'
                     }`}
                     title="Send message"
                   >
-                    <ArrowUp size={15} strokeWidth={2.5} />
+                    <ArrowUp size={16} strokeWidth={2.5} />
                   </button>
                 )}
               </div>

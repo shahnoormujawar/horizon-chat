@@ -11,7 +11,7 @@ import { AgentSteps, SourcesList } from './AgentSteps';
 import { ResearchBanner } from './ResearchBanner';
 import { FileCardList } from './FileCard';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp } from 'lucide-react';
 
 interface MessageBubbleProps {
   message: Message;
@@ -61,11 +61,11 @@ function ThinkingSection({ content }: { content: string }) {
     <div className="mb-3">
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center gap-2 text-[13px] text-t-tertiary hover:text-t-secondary transition-colors group"
+        className="flex items-center gap-2.5 text-[13px] transition-colors group"
       >
-        <Brain size={14} className="text-amber-400" />
-        <span className="font-medium">Reasoning</span>
-        {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+        <div className="thinking-orb-sm" />
+        <span className="font-medium gradient-text-accent">Thinking</span>
+        {collapsed ? <ChevronDown size={13} className="text-t-tertiary" /> : <ChevronUp size={13} className="text-t-tertiary" />}
       </button>
       <AnimatePresence>
         {!collapsed && (
@@ -76,7 +76,7 @@ function ThinkingSection({ content }: { content: string }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="mt-2 pl-6 border-l-2 border-amber-400/20 text-[13px] text-t-tertiary leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto">
+            <div className="mt-2 pl-7 border-l-2 border-accent/20 text-[13px] text-t-tertiary leading-relaxed whitespace-pre-wrap max-h-[200px] overflow-y-auto">
               {content}
             </div>
           </motion.div>
@@ -95,7 +95,7 @@ function FollowUpChips({ suggestions, onClick }: { suggestions: string[]; onClic
         <button
           key={i}
           onClick={() => onClick?.(s)}
-          className="px-3 py-1.5 rounded-full border border-b bg-transparent text-t-secondary hover:text-t-primary hover:border-b-light hover:bg-bg-hover/50 transition-all text-[12px] sm:text-[13px]"
+          className="px-3 py-1.5 rounded-full border border-b bg-transparent text-t-secondary hover:text-t-primary hover:border-accent/30 hover:bg-accent/5 transition-all text-[12px] sm:text-[13px]"
         >
           {s}
         </button>
@@ -104,23 +104,32 @@ function FollowUpChips({ suggestions, onClick }: { suggestions: string[]; onClic
   );
 }
 
+function AIHeader() {
+  return (
+    <div className="flex items-center gap-2.5 mb-3">
+      <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent/25 via-accent/12 to-transparent flex items-center justify-center border border-accent/25 shadow-sm shadow-accent/10 flex-shrink-0">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <span className="text-[14px] font-semibold text-t-primary">horizon</span>
+      <span className="text-[11px] font-medium bg-accent/10 text-accent px-1.5 py-0.5 rounded-md border border-accent/15">Agent</span>
+    </div>
+  );
+}
+
 export const MessageBubble = memo(function MessageBubble({ message, isLatest, onFollowUpClick }: MessageBubbleProps) {
   const isUser = message.role === 'user';
 
-  // Build task groups from persisted agent steps (new agent format)
   const taskGroups = useMemo(() => {
     if (isUser || !message.agentSteps || message.agentSteps.length === 0) return [];
     return buildTaskGroups(message.agentSteps, false);
   }, [message.agentSteps, isUser]);
 
-  // Legacy support: parse [TASK:] markers for old messages
   const parsed = useMemo(() => {
     if (isUser) return null;
-    if (taskGroups.length > 0) return null; // New agent format takes priority
+    if (taskGroups.length > 0) return null;
     return parseAgentContent(message.content);
   }, [message.content, taskGroups.length, isUser]);
 
-  // Get thinking content from persisted steps
   const thinkingContent = useMemo(() => {
     if (!message.agentSteps) return '';
     const thinkingStep = message.agentSteps.find(s => s.type === 'thinking');
@@ -135,18 +144,16 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
         transition={{ duration: 0.25, ease: 'easeOut' }}
         className="flex justify-end py-3"
       >
-        <div className="bg-bg-elevated px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl rounded-br-md max-w-[90%] sm:max-w-[85%] text-t-primary text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap">
+        <div className="bg-gradient-to-br from-accent/15 via-accent/10 to-accent/5 px-3.5 sm:px-4 py-2.5 rounded-2xl rounded-br-sm max-w-[90%] sm:max-w-[80%] text-t-primary text-[14px] sm:text-[15px] leading-relaxed whitespace-pre-wrap border border-accent/20 shadow-sm shadow-accent/5">
           {message.content}
         </div>
       </motion.div>
     );
   }
 
-  // New agent format — has persisted steps with task groups
   const hasTaskGroups = taskGroups.length > 0;
 
   if (hasTaskGroups) {
-    // Deduplicate sources
     const uniqueSources = (message.sources || []).filter(
       (s, i, arr) => arr.findIndex(x => x.url === s.url) === i
     );
@@ -156,50 +163,21 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
         initial={isLatest ? { opacity: 0, y: 10 } : false}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, ease: 'easeOut' }}
-        className="py-4"
+        className="py-4 pl-3 -ml-3 border-l-2 border-accent/[0.10] hover:border-accent/20 transition-colors"
       >
-        {/* AI header */}
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-6 h-6 rounded-full bg-bg-elevated flex items-center justify-center">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4874e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-          </div>
-          <span className="text-[14px] font-semibold text-t-primary">horizon</span>
-          <span className="text-[11px] font-medium text-t-tertiary bg-bg-elevated px-1.5 py-0.5 rounded">Agent</span>
-        </div>
-
-        {/* Thinking / Reasoning */}
+        <AIHeader />
         {thinkingContent && <ThinkingSection content={thinkingContent} />}
-
-        {/* Collapsible task groups — same beautiful UI as before but with REAL data */}
         <AgentSteps taskGroups={taskGroups} />
-
-        {/* Research stats banner */}
-        {message.researchStats && (
-          <ResearchBanner stats={message.researchStats} animated={false} />
-        )}
-
-        {/* Main content (final answer) */}
+        {message.researchStats && <ResearchBanner stats={message.researchStats} animated={false} />}
         {message.content && (
           <div className={message.researchStats ? '' : 'mt-3'}>
             <MarkdownContent content={message.content} />
           </div>
         )}
-
-        {/* File download cards */}
-        {message.files && message.files.length > 0 && (
-          <FileCardList files={message.files} animated={false} />
-        )}
-
-        {/* Sources from real Tavily results */}
+        {message.files && message.files.length > 0 && <FileCardList files={message.files} animated={false} />}
         {uniqueSources.length > 0 && (
-          <SourcesList sources={uniqueSources.map(s => ({
-            title: s.title,
-            url: s.url,
-            description: s.description,
-          }))} />
+          <SourcesList sources={uniqueSources.map(s => ({ title: s.title, url: s.url, description: s.description }))} />
         )}
-
-        {/* Follow-up suggestions */}
         {isLatest && message.followUps && message.followUps.length > 0 && (
           <FollowUpChips suggestions={message.followUps} onClick={onFollowUpClick} />
         )}
@@ -207,7 +185,6 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
     );
   }
 
-  // Legacy format — parse [TASK:] markers from old messages
   const hasSteps = parsed && parsed.taskGroups.length > 0;
 
   return (
@@ -215,28 +192,15 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
       initial={isLatest ? { opacity: 0, y: 10 } : false}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: 'easeOut' }}
-      className="py-4"
+      className="py-4 pl-3 -ml-3 border-l-2 border-accent/[0.10] hover:border-accent/20 transition-colors"
     >
-      {/* AI header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-6 h-6 rounded-full bg-bg-elevated flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4874e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
-        </div>
-        <span className="text-[14px] font-semibold text-t-primary">horizon</span>
-        <span className="text-[11px] font-medium text-t-tertiary bg-bg-elevated px-1.5 py-0.5 rounded">Agent</span>
-      </div>
-
-      {/* Content */}
+      <AIHeader />
       {hasSteps ? (
         <div>
           {parsed.intro && <MarkdownContent content={parsed.intro} />}
           <AgentSteps taskGroups={parsed.taskGroups} />
           {parsed.sources.length > 0 && <SourcesList sources={parsed.sources} />}
-          {parsed.outro && (
-            <div className="mt-3">
-              <MarkdownContent content={parsed.outro} />
-            </div>
-          )}
+          {parsed.outro && <div className="mt-3"><MarkdownContent content={parsed.outro} /></div>}
         </div>
       ) : (
         <div className="prose">
@@ -250,8 +214,8 @@ export const MessageBubble = memo(function MessageBubble({ message, isLatest, on
 
 function ThinkingIndicator() {
   return (
-    <div className="flex items-center gap-2 py-3 mt-1">
-      <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
+    <div className="flex items-center gap-3 py-3 mt-1">
+      <div className="thinking-orb" />
       <span className="text-[13px] text-t-secondary">Thinking</span>
     </div>
   );

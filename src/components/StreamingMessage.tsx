@@ -67,11 +67,11 @@ function ThinkingSection({ content }: { content: string }) {
     <div className="mb-3">
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center gap-2 text-[13px] text-t-tertiary hover:text-t-secondary transition-colors group"
+        className="flex items-center gap-2.5 text-[13px] transition-colors group"
       >
-        <Brain size={14} className="text-amber-400" />
-        <span className="font-medium">Reasoning</span>
-        {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+        <div className="thinking-orb-sm" />
+        <span className="font-medium gradient-text-accent">Thinking</span>
+        {collapsed ? <ChevronDown size={13} className="text-t-tertiary" /> : <ChevronUp size={13} className="text-t-tertiary" />}
       </button>
       <AnimatePresence>
         {!collapsed && (
@@ -82,7 +82,7 @@ function ThinkingSection({ content }: { content: string }) {
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
           >
-            <div className="mt-2 pl-6 border-l-2 border-amber-400/20 text-[13px] text-t-tertiary leading-relaxed whitespace-pre-wrap">
+            <div className="mt-2 pl-7 border-l-2 border-accent/20 text-[13px] text-t-tertiary leading-relaxed whitespace-pre-wrap">
               {content}
             </div>
           </motion.div>
@@ -100,7 +100,7 @@ function FollowUpChips({ suggestions, onClick }: { suggestions: string[]; onClic
         <button
           key={i}
           onClick={() => onClick?.(s)}
-          className="px-3 py-1.5 rounded-full border border-b bg-transparent text-t-secondary hover:text-t-primary hover:border-b-light hover:bg-bg-hover/50 transition-all text-[12px] sm:text-[13px]"
+          className="px-3 py-1.5 rounded-full border border-b bg-transparent text-t-secondary hover:text-t-primary hover:border-accent/30 hover:bg-accent/5 transition-all text-[12px] sm:text-[13px]"
         >
           {s}
         </button>
@@ -128,11 +128,13 @@ export function StreamingMessage({
   const [researchStats, setResearchStats] = useState<ResearchStats | null>(null);
   const [files, setFiles] = useState<AgentFile[]>([]);
   const rafRef = useRef<number>(0);
-  const lastUpdateRef = useRef('');
+  const revealIndexRef = useRef(0);
 
   useEffect(() => {
     if (!isStreaming) {
+      // Flush everything when streaming stops
       setDisplayContent(contentRef.current);
+      revealIndexRef.current = contentRef.current.length;
       if (agentStepsRef) setSteps([...agentStepsRef.current]);
       if (agentSourcesRef) setSources([...agentSourcesRef.current]);
       if (thinkingRef) setThinking(thinkingRef.current);
@@ -142,20 +144,30 @@ export function StreamingMessage({
       return;
     }
 
+    revealIndexRef.current = 0;
     let running = true;
     const tick = () => {
       if (!running) return;
-      const current = contentRef.current;
-      if (current !== lastUpdateRef.current) {
-        lastUpdateRef.current = current;
-        setDisplayContent(current);
+
+      const fullContent = contentRef.current;
+
+      // ── Typewriter reveal ──
+      if (revealIndexRef.current < fullContent.length) {
+        const gap = fullContent.length - revealIndexRef.current;
+        // Adaptive speed: gentle typewriter when close, fast catch-up when far behind
+        const speed = gap > 200 ? gap : gap > 80 ? 8 : gap > 30 ? 4 : 2;
+        revealIndexRef.current = Math.min(revealIndexRef.current + speed, fullContent.length);
+        setDisplayContent(fullContent.substring(0, revealIndexRef.current));
       }
+
+      // Update agent state
       if (agentStepsRef) setSteps([...agentStepsRef.current]);
       if (agentSourcesRef) setSources([...agentSourcesRef.current]);
       if (thinkingRef) setThinking(thinkingRef.current);
       if (followUpsRef) setFollowUps([...followUpsRef.current]);
       if (researchStatsRef) setResearchStats(researchStatsRef.current);
       if (filesRef) setFiles([...filesRef.current]);
+
       rafRef.current = requestAnimationFrame(tick);
     };
     rafRef.current = requestAnimationFrame(tick);
@@ -168,14 +180,14 @@ export function StreamingMessage({
   const uniqueSources = sources.filter((s, i, arr) => arr.findIndex(x => x.url === s.url) === i);
 
   return (
-    <div className="py-4">
+    <div className="py-4 pl-3 -ml-3 border-l-2 border-accent/[0.10]">
       {/* AI header */}
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-6 h-6 rounded-full bg-bg-elevated flex items-center justify-center">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#d4874e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      <div className="flex items-center gap-2.5 mb-3">
+        <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-accent/25 via-accent/12 to-transparent flex items-center justify-center border border-accent/25 shadow-sm shadow-accent/10 flex-shrink-0">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
         </div>
         <span className="text-[14px] font-semibold text-t-primary">horizon</span>
-        <span className="text-[11px] font-medium text-t-tertiary bg-bg-elevated px-1.5 py-0.5 rounded">Agent</span>
+        <span className="text-[11px] font-medium bg-accent/10 text-accent px-1.5 py-0.5 rounded-md border border-accent/15">Agent</span>
       </div>
 
       {/* Thinking section */}
@@ -188,21 +200,21 @@ export function StreamingMessage({
 
       {/* Waiting indicator */}
       {!hasContent && hasTaskGroups && isStreaming && (
-        <div className="flex items-center gap-2 py-2 mt-1">
-          <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
+        <div className="flex items-center gap-3 py-3 mt-1">
+          <div className="thinking-orb" />
           <span className="text-[13px] text-t-secondary">Synthesizing findings...</span>
         </div>
       )}
 
-      {/* Initial thinking indicator */}
+      {/* Initial thinking indicator — animated orb */}
       {!hasContent && !hasTaskGroups && isStreaming && <ThinkingIndicator />}
 
-      {/* Research stats banner — appears when research is done and answer starts */}
+      {/* Research stats banner */}
       {researchStats && hasContent && (
         <ResearchBanner stats={researchStats} />
       )}
 
-      {/* Main text content (final answer) */}
+      {/* Main text content with typewriter cursor */}
       {hasContent && (
         <div>
           <MarkdownContent content={displayContent} />
@@ -228,15 +240,31 @@ export function StreamingMessage({
 
 function ThinkingIndicator() {
   return (
-    <div className="flex items-center gap-2 py-3 mt-1">
-      <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
-      <span className="text-[13px] text-t-secondary">Planning research approach...</span>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: 'easeOut' }}
+      className="flex items-center gap-3 py-4 mt-1"
+    >
+      <div className="thinking-orb" />
+      <div className="flex flex-col gap-0.5">
+        <span className="text-[13px] font-medium text-t-primary">Thinking<ThinkingDots /></span>
+        <span className="text-[11px] text-t-tertiary">Planning research approach</span>
+      </div>
+    </motion.div>
+  );
+}
+
+function ThinkingDots() {
+  return (
+    <span className="inline-flex items-center gap-[3px] ml-1.5 -mb-[2px]">
+      <span className="w-[3px] h-[3px] rounded-full bg-accent animate-bounce" style={{ animationDelay: '0s', animationDuration: '0.8s' }} />
+      <span className="w-[3px] h-[3px] rounded-full bg-accent animate-bounce" style={{ animationDelay: '0.15s', animationDuration: '0.8s' }} />
+      <span className="w-[3px] h-[3px] rounded-full bg-accent animate-bounce" style={{ animationDelay: '0.3s', animationDuration: '0.8s' }} />
+    </span>
   );
 }
 
 function StreamingCursor() {
-  return (
-    <span className="inline-block w-[3px] h-[18px] bg-t-secondary/60 animate-pulse ml-0.5 align-text-bottom rounded-sm" />
-  );
+  return <span className="streaming-cursor" />;
 }

@@ -7,40 +7,41 @@ module.exports = {
     extend: {
       colors: {
         bg: {
-          primary: '#1c1c1e',
-          secondary: '#161618',
-          sidebar: '#141416',
-          input: '#2a2a2e',
-          hover: '#2c2c30',
-          elevated: '#252528',
-          chip: '#2a2a2e',
+          primary: '#0f0f12',
+          secondary: '#0c0c0f',
+          sidebar: '#0b0b0e',
+          input: '#1a1a1e',
+          hover: '#1e1e24',
+          elevated: '#17171b',
+          chip: '#1a1a1e',
         },
         t: {
           primary: '#e8e8e6',
           secondary: '#9a9a9a',
-          tertiary: '#6b6b6b',
-          placeholder: '#6b6b6b',
-          heading: '#c8c5be',
+          tertiary: '#5a5a62',
+          placeholder: '#4a4a52',
+          heading: '#c8c8c6',
         },
         b: {
-          DEFAULT: '#2e2e30',
-          light: '#363638',
-          dark: '#222224',
+          DEFAULT: '#1e1e22',
+          light: '#2a2a30',
+          dark: '#141418',
         },
         accent: {
-          DEFAULT: '#d4874e',
+          DEFAULT: '#3b82f6',
           green: '#4ade80',
-          blue: '#0081f2',
+          blue: '#3b82f6',
+          purple: '#a78bfa',
         },
         send: {
-          DEFAULT: '#4a4a4e',
+          DEFAULT: '#2a2a30',
           active: '#e8e8e6',
         },
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['JetBrains Mono', 'Fira Code', 'monospace'],
-        heading: ['Georgia', 'Times New Roman', 'serif'],
+        heading: ['Inter', 'system-ui', 'sans-serif'],
       },
       animation: {
         'fade-in': 'fadeIn 0.4s ease-out',
@@ -65,4 +66,3 @@ module.exports = {
   },
   plugins: [],
 }
-

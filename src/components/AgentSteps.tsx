@@ -113,18 +113,18 @@ function TaskGroup({ group, isLast, defaultCollapsed }: { group: AgentTaskGroup;
   const [collapsed, setCollapsed] = useState(defaultCollapsed ?? false);
 
   return (
-    <div className="my-3">
+    <div className="my-2 rounded-xl border border-b bg-bg-elevated/30 overflow-hidden">
       {/* Task header */}
       <button
         onClick={() => setCollapsed(!collapsed)}
-        className="flex items-center gap-2.5 w-full text-left group"
+        className="flex items-center gap-2.5 w-full text-left group px-3 py-2.5 hover:bg-bg-hover/50 transition-colors"
       >
         <StatusIcon status={group.status} />
-        <span className="text-[14px] font-medium flex-1 text-t-primary">
+        <span className="text-[13px] font-medium flex-1 text-t-primary">
           {group.title}
         </span>
         <span className="text-t-tertiary group-hover:text-t-secondary transition-colors">
-          {collapsed ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+          {collapsed ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
         </span>
       </button>
 
@@ -138,7 +138,7 @@ function TaskGroup({ group, isLast, defaultCollapsed }: { group: AgentTaskGroup;
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="pl-4 sm:pl-[30px] pt-2 space-y-2">
+            <div className="px-3 pb-3 pt-1 space-y-2 border-t border-b">
               {group.actions.map((action, i) => (
                 <motion.div
                   key={i}
@@ -147,8 +147,8 @@ function TaskGroup({ group, isLast, defaultCollapsed }: { group: AgentTaskGroup;
                   transition={{ duration: 0.2 }}
                 >
                   <div className="flex items-start gap-2 max-w-full">
-                    <div className={`inline-flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-[12px] sm:text-[13px] ${ACTION_COLORS[action.type]} bg-bg-input border border-b max-w-full`}>
-                      <span className={`flex-shrink-0 ${ACTION_COLORS[action.type].split(' ')[0]}`}>
+                    <div className={`inline-flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-lg text-[12px] sm:text-[13px] bg-bg-elevated border border-b max-w-full shadow-sm`}>
+                      <span className={`flex-shrink-0 p-1 rounded-md ${ACTION_COLORS[action.type]}`}>
                         {ACTION_ICONS[action.type]}
                       </span>
                       <span className="text-t-secondary break-words">{action.description}</span>

@@ -80,6 +80,9 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         animate={{ x: isOpen ? 0 : -260 }}
         transition={{ type: 'spring', stiffness: 300, damping: 30 }}
         className="fixed left-0 top-0 bottom-0 w-[260px] bg-bg-sidebar border-r border-b z-40 flex flex-col"
+        style={{
+          background: 'linear-gradient(180deg, rgba(16,16,18,0.98) 0%, rgba(20,20,22,0.98) 100%)',
+        }}
       >
         {/* Logo + Toggle */}
         <div className="flex items-center justify-between px-4 py-4">
@@ -98,9 +101,9 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
         <div className="px-2 space-y-0.5">
           <button
             onClick={() => createChat()}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-t-secondary hover:bg-bg-hover hover:text-t-primary transition-all text-[13px]"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-t-secondary hover:bg-accent/8 hover:text-accent border border-transparent hover:border-accent/12 transition-all text-[13px] group"
           >
-            <Plus size={16} className="text-t-tertiary" />
+            <Plus size={16} className="text-t-tertiary group-hover:text-accent transition-colors" />
             <span>New task</span>
           </button>
           <button
@@ -177,8 +180,8 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                 key={chat.id}
                 className={`group flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all ${
                   activeChatId === chat.id
-                    ? 'bg-bg-hover text-t-primary'
-                    : 'text-t-secondary hover:bg-bg-hover/50 hover:text-t-primary'
+                    ? 'bg-gradient-to-r from-accent/12 to-accent/[0.03] text-t-primary border border-accent/15 shadow-sm shadow-accent/5'
+                    : 'text-t-secondary hover:bg-bg-hover/60 hover:text-t-primary border border-transparent'
                 }`}
                 onClick={() => {
                   setActiveChat(chat.id);
@@ -186,7 +189,7 @@ export function Sidebar({ isOpen, onToggle }: SidebarProps) {
                   if (window.innerWidth < 1024) onToggle();
                 }}
               >
-                <Home size={14} className="flex-shrink-0 text-t-tertiary" />
+                <Home size={14} className={`flex-shrink-0 transition-colors ${activeChatId === chat.id ? 'text-accent/70' : 'text-t-tertiary'}`} />
 
                 {editingId === chat.id ? (
                   <div className="flex-1 flex items-center gap-1">
